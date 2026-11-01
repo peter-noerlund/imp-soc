@@ -50,16 +50,6 @@ module cpu
     wire dbus_ack; 
     wire [31:0] dbus_rdt;
 
-    // RAM-based register file bus
-    /*
-    wire [8:0] sram_waddr;
-    wire [1:0] sram_wdata;
-    wire sram_wen;
-    wire [8:0] sram_raddr;
-    wire [1:0] sram_rdata;
-    wire sram_ren;
-    */
-
     assign wb_cti = 3'b000;
     assign wb_bte = 2'b00;
     assign wb_cyc = wb_stb;
