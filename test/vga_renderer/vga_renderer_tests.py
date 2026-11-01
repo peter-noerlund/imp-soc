@@ -73,9 +73,6 @@ async def verify_line(dut, line_buffer: list):
 
     decoded_line = decode_line_buffer(line_buffer)
 
-    print(line_buffer)
-    print(decoded_line)
-
     # Verify 640 black pixels
     for i in range(640):
         pixel_idx = i // 4
@@ -86,8 +83,6 @@ async def verify_line(dut, line_buffer: list):
 
         block_idx = pixel_idx // 20
         block = line_buffer[block_idx * 3 : block_idx * 3 + 3]
-
-        print(f"pixel_idx={pixel_idx} block_idx={block_idx}, pixel={pixel:02x}")
 
         assert int(dut.vga_red.value) == red, f"Pixel {i} should have color 0x{pixel:06x} (red={red}, block={block[0]:02x}{block[1]:02x}{block[2]:02x})"
         assert int(dut.vga_green.value) == green, f"Pixel {i} should have color 0x{pixel:06x} (green={green}, block={block[0]:02x}{block[1]:02x}{block[2]:02x})"
