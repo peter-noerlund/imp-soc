@@ -36,6 +36,20 @@ module pico_ice_top
     wire spi_flash_ss_n;
     wire spi_psram_ss_n;
 
+    // VGA
+    wire vga_vsync;
+    wire vga_hsync;
+    wire [1:0] vga_red;
+    wire [1:0] vga_green;
+    wire [1:0] vga_blue;
+
+    // Buffer
+    bit vga_vsync_buf;
+    bit vga_hsync_buf;
+    bit [1:0] vga_red_buf;
+    bit [1:0] vga_green_buf;
+    bit [1:0] vga_blue_buf;
+
     assign LED_R = 1'b1;
     assign LED_G = ~clk_locked;
     assign LED_B = 1'b1;
@@ -53,6 +67,19 @@ module pico_ice_top
     assign spi_sio_oe = {pmod2_oe[5:4], pmod2_oe[2:1]};
     assign spi_flash_ss_n = pmod2_out[0];
     assign spi_psram_ss_n = pmod2_out[6];
+
+    assign ICE_PMOD0 = {
+        vga_hsync_buf, vga_blue_buf[0], vga_green_buf[0], vga_red_buf[0],
+        vga_vsync_buf, vga_blue_buf[1], vga_green_buf[1], vga_red_buf[1]
+    };
+
+    always_ff @ (posedge clk) begin
+        vga_vsync_buf <= vga_vsync;
+        vga_hsync_buf <= vga_hsync;
+        vga_red_buf <= vga_red;
+        vga_green_buf <= vga_green;
+        vga_blue_buf <= vga_blue;
+    end
 
     pll pll(
         .clock_in(ICE_CLK),
@@ -80,10 +107,10 @@ module pico_ice_top
         .spi_flash_ss_n(spi_flash_ss_n),
         .spi_psram_ss_n(spi_psram_ss_n),
 
-        .vga_red({ICE_PMOD0[0], ICE_PMOD0[4]}),
-        .vga_green({ICE_PMOD0[1], ICE_PMOD0[5]}),
-        .vga_blue({ICE_PMOD0[2], ICE_PMOD0[6]}),
-        .vga_vsync(ICE_PMOD0[3]),
-        .vga_hsync(ICE_PMOD0[7])
+        .vga_red(vga_red),
+        .vga_green(vga_green),
+        .vga_blue(vga_blue),
+        .vga_vsync(vga_vsync),
+        .vga_hsync(vga_hsync)
     );
 endmodule
