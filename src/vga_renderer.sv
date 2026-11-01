@@ -2,7 +2,7 @@
 
 module vga_renderer
     #(
-        parameter int CHUNK_COUNT=20
+        parameter int CHUNK_COUNT=16
     )
     (
         input wire clk,
@@ -22,7 +22,24 @@ module vga_renderer
         //! @end
     );
 
+
+`ifdef PICO_ICE
+    // PICO-ICE runs 512x384 on a 640x480@60Hz screen
+    localparam int HPIXELS = 512;
+    localparam int VPIXELS = 384;
+    localparam int HPOS_WIDTH = 10;     // 800 actual horizontal pixels
+`else // PICO_ICE
+    // TT runs 1024x768 on a 1024x768@60Hz screen
+    localparam int HPIXELS = 1024;
+    localparam int VPIXELS = 768;
+    localparam int HPOS_WIDTH = 11;     // 1338 actual horizontal pixels
+`endif // PICO_ICE
+    localparam int VPOS_WIDTH = 10;
+    localparam int PIXEL_COUNT = CHUNK_COUNT * 8;
+    localparam int SUBPIXEL_WIDTH = HPIXELS / PIXEL_COUNT;
+    localparam int SUBPIXEL_IDX_WIDTH = $clog2(SUBPIXEL_WIDTH);
     localparam int CHUNK_IDX_WIDTH = $clog2(CHUNK_COUNT);
+    localparam int GROUP_IDX_WIDTH = 2;
 
     localparam [2:0] PIXELS_BB = 3'b000;
     localparam [2:0] PIXELS_B1 = 3'b001;
@@ -34,28 +51,27 @@ module vga_renderer
     // PIXELS_21 is not allowed
     localparam [2:0] PIXELS_22 = 3'b111;
 
-    wire [1:0] red;
-    wire [1:0] green;
-    wire [1:0] blue;
-    wire [5:0] pixel;
-`ifdef PICO_ICE
-    wire [9:0] vga_hpos;
-`else
-    wire [10:0] vga_hpos;
-`endif
-    wire [9:0] vga_vpos;
+    wire [HPOS_WIDTH - 1 : 0] vga_hpos;
+    wire [VPOS_WIDTH - 1 : 0] vga_vpos;
     wire vga_blank;
-    wire [CHUNK_IDX_WIDTH - 1 : 0] chunk_idx;
-    wire [2:0] pixel_idx;
+
     bit active;
+
+    bit [23:0] chunk;
+    wire [2:0] group;
     wire [5:0] color1;
     wire [5:0] color2;
     bit [5:0] pixel0;
     bit [5:0] pixel1;
-    wire [2:0] pixel_group;
-    wire [1:0] pixel_group_idx;
-    wire pixel_group_subpixel_idx;
-    bit [23:0] chunk;
+    wire [5:0] pixel;
+    wire [1:0] red;
+    wire [1:0] green;
+    wire [1:0] blue;
+
+    wire [CHUNK_IDX_WIDTH - 1 : 0] chunk_idx;
+    wire [GROUP_IDX_WIDTH - 1 : 0] group_idx;
+    wire pixel_idx;
+    wire [SUBPIXEL_IDX_WIDTH - 1 : 0] subpixel_idx;
 
     int i;
     
@@ -63,27 +79,41 @@ module vga_renderer
     assign vga_green = vga_blank ? 2'b00 : green;
     assign vga_blue = vga_blank ? 2'b00 : blue;
 
-    // Each pixel is repeated 4 cycles
-    assign pixel_idx = vga_hpos[4:2];
-    assign pixel_group_idx = pixel_idx[2:1];
-    assign pixel_group_subpixel_idx = pixel_idx[0];
+    // vga_hpos implicitly stores at lot of state.
+    // 
+    // For 1024x768, it looks like this (C=chunk, G=group, P=pixel, S=subpixel):
+    //
+    //  1
+    //  0 9 8 7 6 5 4 3 2 1 0
+    // +-+-+-+-+-+-+-+-+-+-+-+
+    // | |   C   | G |P|  S  |
+    // +-+-+-+-+-+-+-+-+-+-+-+
+    //
+    // For 640x480 (512x384) it looks like this:
+    //
+    //  9 8 7 6 5 4 3 2 1 0
+    // +-+-+-+-+-+-+-+-+-+-+
+    // | |   C   | G |P| S |
+    // +-+-+-+-+-+-+-+-+-+-+
 
-    // Each chunk represents 8 pixels
-    assign chunk_idx = vga_hpos[CHUNK_IDX_WIDTH + 5 - 1 : 5];
+    assign subpixel_idx = vga_hpos[SUBPIXEL_IDX_WIDTH - 1 : 0];
+    assign pixel_idx = vga_hpos[SUBPIXEL_IDX_WIDTH];
+    assign group_idx = vga_hpos[GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : SUBPIXEL_IDX_WIDTH];
+    assign chunk_idx = vga_hpos[CHUNK_IDX_WIDTH + GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH];
 
+    assign group = chunk[group_idx * 3 + 2 -: 3];
     assign color1 = chunk[23:18];
     assign color2 = chunk[17:12];
-    assign pixel_group = chunk[(3 - pixel_group_idx) * 3 + 2 -: 3];
 
-    assign pixel = pixel_group_subpixel_idx ? pixel1 : pixel0;
+    assign pixel = pixel_idx ? pixel1 : pixel0;
     assign red = pixel[5:4];
     assign green = pixel[3:2];
     assign blue = pixel[1:0];
 
-    assign vgactrl_read_req = vga_hpos == 11'd639 && vga_vpos[1:0] == 2'b11 && active && vgaconfig_enabled;
+    assign vgactrl_read_req = vga_hpos == HPOS_WIDTH'(HPIXELS - 1) && subpixel_idx == SUBPIXEL_IDX_WIDTH'(SUBPIXEL_WIDTH - 1) && active && vgaconfig_enabled;
 
     always_comb begin
-        case (pixel_group)
+        case (group)
             PIXELS_BB: pixel0 = 6'b000000;
             PIXELS_B1: pixel0 = color1;
             PIXELS_B2: pixel0 = color2;
@@ -96,7 +126,7 @@ module vga_renderer
     end
 
     always_comb begin
-        case (pixel_group)
+        case (group)
             PIXELS_BB: pixel1 = 6'b000000;
             PIXELS_B1: pixel1 = 6'b000000;
             PIXELS_B2: pixel1 = 6'b000000;
@@ -121,30 +151,30 @@ module vga_renderer
         if (rst) begin
             active <= 1'b1;
         end else begin
-            if (vga_vpos == 10'd401) begin
+            if (vga_vpos == VPOS_WIDTH'(VPIXELS + 1)) begin
                 active <= 1'b0; // TODO - Do not fetch after last line
             end
-            if (vga_vpos == 10'd0) begin
+            if (vga_vpos == VPOS_WIDTH'(0)) begin
                 active <= 1'b1; // TODO - Wait until line -1
             end
         end
     end
 
 `ifdef PICO_ICE
-    // PICO-ICE runs at 25.075 MHz and outputs VGA 640x480 at 60Hz
+    // PICO-ICE runs at 25.075 MHz and outputs VGA 640x480 at 60Hz, but letter boxed to 512x384
     vga_timing #(
-        .H_PIXELS(640),
-        .V_PIXELS(480),
-        .H_RIGHT_BORDER(8),
+        .H_PIXELS(512),
+        .V_PIXELS(384),
+        .H_RIGHT_BORDER(8 + 64),    // 640x480@60Hz already has 8 pixel border
         .H_FRONT_PORCH(8),
         .H_SYNC_TIME(96),
         .H_BACK_PORCH(40),
-        .H_LEFT_BORDER(8),
-        .V_BOTTOM_BORDER(8),
+        .H_LEFT_BORDER(8 + 64),     // 640x480@60Hz already has 8 pixel border
+        .V_BOTTOM_BORDER(8 + 48),   // 640x480@60Hz already has 8 pixel border
         .V_FRONT_PORCH(2),
         .V_SYNC_TIME(25),
         .V_BACK_PORCH(25),
-        .V_TOP_BORDER(8),
+        .V_TOP_BORDER(8 + 48),      // 640x480@60Hz already has 8 pixel border
         .H_SYNC_POLARITY(0),
         .V_SYNC_POLARITY(0)
     ) timing (
@@ -156,12 +186,9 @@ module vga_renderer
         .vga_vsync(vga_vsync),
         .vga_blank(vga_blank)
     );
-`else
-    // ASIC runs at 65 MHz and outputs VESA 1024x768 at 60Hz, letter boxed to 640x480
-    vga_timing #(
-        .H_LEFT_BORDER(192), .H_PIXELS(640), .H_RIGHT_BORDER(192),
-        .V_TOP_BORDER(144), .V_PIXELS(480), .V_BOTTOM_BORDER(144)
-    ) timing(
+`else // PICO_ICE
+    // ASIC runs at 65 MHz and outputs VESA 1024x768 at 60Hz
+    vga_timing timing(
         .clk(clk),
         .rst(rst),
         .vga_hpos(vga_hpos),
@@ -170,5 +197,5 @@ module vga_renderer
         .vga_vsync(vga_vsync),
         .vga_blank(vga_blank)
     );
-`endif
+`endif // PICO_ICE
 endmodule
