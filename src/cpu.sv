@@ -63,7 +63,7 @@ module cpu
     assign wb_cyc = wb_stb;
     
     /* verilator lint_off PINMISSING */
-    serv_top #(.WITH_CSR(0), .RESET_PC(32'h02000000)) serv(
+    serv_top #(.WITH_CSR(0), .RESET_PC(32'h00000000)) serv(
         .clk(clk),
         .i_rst(rst),
         .i_timer_irq(1'b0),

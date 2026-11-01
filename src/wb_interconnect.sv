@@ -53,10 +53,10 @@ module wb_interconnect
     wire uart_sel;
     wire vga_sel;
 
-    assign mem_sel = wb_in_adr[25] == 1'b0;;
-    assign clock_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3:2] == 2'b00;
-    assign uart_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3:2] == 2'b01;
-    assign vga_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3] == 1'b1;
+    assign mem_sel = wb_in_adr[25] == 1'b0;                                 // Memory at 0x00000000 - 0x01FFFFFF (xxxx_xx0x_xxxx_xxxx_xxxx_xxxx_xxxx_xxxx)
+    assign clock_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3:2] == 2'b00;    // Clock  at 0x02000000 - 0x02000003 (xxxx_xx1x_xxxx_xxxx_xxxx_xxxx_xxxx_00xx)
+    assign uart_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3:2] == 2'b01;     // UART   at 0x02000004 - 0x02000007 (xxxx_xx1x_xxxx_xxxx_xxxx_xxxx_xxxx_01xx)
+    assign vga_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3] == 1'b1;         // Video  at 0x02000008 - 0x0200000F (xxxx_xx1x_xxxx_xxxx_xxxx_xxxx_xxxx_1xxx)
 
     assign wb_mem_stb = wb_in_stb & mem_sel;
     assign wb_clock_stb = wb_in_stb & clock_sel;

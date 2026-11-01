@@ -2,7 +2,7 @@
 
 module uart_device
     #(
-        parameter PERIOD=25,                            //! Period in cycles
+        parameter PERIOD=65,                            //! Period in cycles
         parameter ADDR_WIDTH=32,                        //! Address width
         parameter DATA_WIDTH=32                         //! Data width
     )
@@ -28,7 +28,7 @@ module uart_device
         output wire uart_tx                             //! UART transmit
     );
 
-    localparam PERIOD_BITS = $clog2(PERIOD) + 1;
+    localparam PERIOD_BITS = $clog2(PERIOD + 1);
 
     bit ack;
     bit tx;

@@ -4,7 +4,7 @@ from cocotb.triggers import ClockCycles, FallingEdge, First, Timer, RisingEdge
 
 
 async def init(dut):
-    clock = Clock(dut.clk, 19.860, unit="ns")
+    clock = Clock(dut.clk, 15.384, unit="ns")
     cocotb.start_soon(clock.start())
 
     dut.rst.value = 1
@@ -134,7 +134,7 @@ async def wishbone_write(dut, address: int, value: int, size: int):
     await wishbone_operation(dut, address, size, True, value)
 
 
-async def wishbone_bus(dut, flash: list, ram: list, ram_address: int = 0x3000000, flash_address: int = 0x2000000):
+async def wishbone_bus(dut, flash: list, ram: list, ram_address: int = 0x1000000, flash_address: int = 0):
     dut.wb_err.value = 0
     dut.wb_rty.value = 0
 
@@ -365,7 +365,7 @@ def _op_b(opcode: int, funct3: int, rs1: int, rs2: int, imm: int) -> int:
 
 
 def _op_u(opcode: int, rd: int, imm: int) -> int:
-    return opcode | (rs << 7) | (imm & 0xFFFFF000)
+    return opcode | (rd << 7) | ((imm & 0xFFFFF) << 12)
 
 
 def _op_j(opcode: int, rd: int, imm: int) -> int:

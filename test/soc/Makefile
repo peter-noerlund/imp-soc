@@ -11,11 +11,9 @@ VERILOG_SOURCES =  \
 	$(CURDIR)/../../src/clock_device.sv \
 	$(CURDIR)/../../src/dummy_device.sv \
 	$(CURDIR)/../../src/memory_device.sv \
-	$(CURDIR)/../../src/mul_device.sv \
 	$(CURDIR)/../../src/register_file.sv \
 	$(CURDIR)/../../src/uart_device.sv \
-	$(CURDIR)/../../src/video_device.sv \
-	$(CURDIR)/../../src/video_renderer.sv \
+	$(CURDIR)/../../src/vga_device.sv \
 	$(CURDIR)/../../src/wb_arbiter.sv \
 	$(CURDIR)/../../src/wb_interconnect.sv \
 	$(CURDIR)/../../src/write_aligner.sv \
@@ -24,6 +22,7 @@ VERILOG_SOURCES =  \
 	$(CURDIR)/../../src/serv/rtl/serv_bufreg2.v \
 	$(CURDIR)/../../src/serv/rtl/serv_ctrl.v \
 	$(CURDIR)/../../src/serv/rtl/serv_csr.v \
+	$(CURDIR)/../../src/serv/rtl/serv_debug.v \
 	$(CURDIR)/../../src/serv/rtl/serv_decode.v \
 	$(CURDIR)/../../src/serv/rtl/serv_immdec.v \
 	$(CURDIR)/../../src/serv/rtl/serv_mem_if.v \

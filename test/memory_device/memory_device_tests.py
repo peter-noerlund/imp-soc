@@ -115,7 +115,7 @@ async def test_write(dut, memory: bytearray, base_address: int):
 
 @cocotb.test()
 async def test_memory_device(dut):
-    clock = Clock(dut.clk, 19.860, unit="ns")
+    clock = Clock(dut.clk, 15.384, unit="ns")
     cocotb.start_soon(clock.start())
 
     flash = bytearray(16 * 1024 * 1024)

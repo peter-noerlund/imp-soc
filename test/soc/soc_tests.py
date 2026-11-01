@@ -7,13 +7,14 @@ from cocotb.triggers import ClockCycles, Timer
 
 @cocotb.test()
 async def test_soc_uart(dut):
-    clock = Clock(dut.clk, 19.860, unit="ns")
+    clock = Clock(dut.clk, 15.384, unit="ns")
     cocotb.start_soon(clock.start())
 
     flash = bytearray(16 * 1024 * 1024)
     code = [
-        utils.addi(utils.X1, utils.ZERO, 0x50),
-        utils.sb(utils.ZERO, utils.X1, 0x18),
+        utils.lui(utils.X1, 0x02000),
+        utils.addi(utils.X2, utils.ZERO, 0x50),
+        utils.sb(utils.X1, utils.X2, 0x4),
         utils.jal(utils.ZERO, 0)
     ]
     for i in range(len(code)):
@@ -32,7 +33,7 @@ async def test_soc_uart(dut):
     await ClockCycles(dut.clk, 10)
     dut.rst.value = 0
     
-    value = await utils.uart_read_byte(dut, 2000000, 1000000000)
+    value = await utils.uart_read_byte(dut, 1000000, 1000000000)
 
     assert value == 0x50
 

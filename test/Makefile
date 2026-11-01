@@ -6,9 +6,6 @@ clock_device:
 memory_device:
 	$(MAKE) -C memory_device
 
-mul_device:
-	$(MAKE) -C mul_device
-
 register_file:
 	$(MAKE) -C register_file
 

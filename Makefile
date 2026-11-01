@@ -26,7 +26,9 @@ VERILOG_SOURCES=\
     src/wb_interconnect.sv \
     src/write_aligner.sv
 
-all: pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
+all: lint
+
+fpga: pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
 
 pico_ice/pico_ice_pll.v:
 	icepll -q -i 48 -o 25.075 -p -m -f $@

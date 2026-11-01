@@ -75,7 +75,7 @@ async def rf_write(dut, wreg0: int, wvalue0: int):
 
 @cocotb.test()
 async def test_read_write(dut):
-    clock = Clock(dut.clk, 19.860, unit="ns")
+    clock = Clock(dut.clk, 15.384, unit="ns")
     cocotb.start_soon(clock.start())
 
     dut.rst.value = 1
