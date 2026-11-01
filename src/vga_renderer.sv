@@ -45,7 +45,7 @@ module vga_renderer
     localparam [2:0] CTI_INCREMENT = 3'b010;
     localparam [2:0] CTI_END_OF_BURST = 3'b111;
 
-    localparam [2:0] BTE_LINEAR = 2'b00;
+    localparam [1:0] BTE_LINEAR = 2'b00;
 
     wire vga_blank;
     wire [10:0] vga_hpos;
