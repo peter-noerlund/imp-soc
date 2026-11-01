@@ -1,4 +1,4 @@
-all: clock_device register_file uart_device mul_device write_aligner memory_device video_device video_renderer cpu soc
+all: clock_device register_file uart_device mul_device write_aligner memory_device vga_timing cpu soc
 
 clock_device:
 	$(MAKE) -C clock_device
@@ -21,13 +21,10 @@ soc:
 uart_device:
 	$(MAKE) -C uart_device
 
-video_device:
-	$(MAKE) -C video_device
-
-video_renderer:
-	$(MAKE) -C video_renderer
+vga_timing:
+	$(MAKE) -C vga_timing
 
 write_aligner:
 	$(MAKE) -C write_aligner
 
-.PHONY: clock_device register_file uart_device mul_device write_aligner memory_device cpu soc video_device video_renderer
+.PHONY: clock_device register_file uart_device mul_device write_aligner memory_device cpu soc vga_timing
