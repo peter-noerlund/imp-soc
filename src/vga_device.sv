@@ -11,14 +11,14 @@ module vga_device
 
         input wire wb_cyc,
         input wire wb_stb,
+        /* verilator lint_off UNUSEDSIGNAL */
         input wire [ADDR_WIDTH - 1 :0] wb_adr,
         input wire wb_we,
         input wire [3:0] wb_sel,
-        /* verilator lint_off UNUSEDSIGNAL */
         input wire [2:0] wb_cti,
         input wire [1:0] wb_bte,
-        /* verilator lint_on UNUSEDSIGNAL */
         input wire [31:0] wb_dat,
+        /* verilator lint_on UNUSEDSIGNAL */
         output wire wb_ack,
         output wire wb_rty,
         output wire wb_err,
@@ -30,7 +30,6 @@ module vga_device
 
     bit enabled;
     bit [ADDR_WIDTH - 15 : 0] addr;
-    bit [3:0] scale;
     bit ack;
     bit latch;
     

@@ -46,11 +46,13 @@ module memory_device
     bit [31:0] rdt;
     bit ack;
 
-    wire [24:0] wb_effective_adr;
+    wire [23:0] wb_effective_adr;
+    /* verilator lint_off UNUSEDSIGNAL */
     wire [3:0] wb_effective_sel;
-    wire [31:0] wb_effective_dat;
     wire [2:0] wb_effective_cti;
     wire [1:0] wb_effective_bte;
+    /* verilator lint_on UNUSEDSIGNAL */
+    wire [31:0] wb_effective_dat;
 
     // SPI signals
     bit sck;
@@ -81,8 +83,8 @@ module memory_device
     assign write_command = 8'h38;
     assign command = wb_we ? write_command : read_command;
 
-    write_aligner #(.ADDR_WIDTH(25)) aligner(
-        .wb_in_adr(wb_adr),
+    write_aligner #(.ADDR_WIDTH(24)) aligner(
+        .wb_in_adr(wb_adr[23:0]),
         .wb_in_we(wb_we),
         .wb_in_sel(wb_sel),
         .wb_in_dat(wb_dat),

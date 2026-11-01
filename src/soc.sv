@@ -27,7 +27,9 @@ module soc
     // Main wishbone bus
     wire wb_cpu_cyc;
     wire wb_cpu_stb;
+    /* verilator lint_off UNUSEDSIGNAL */
     wire [31:0] wb_cpu_adr;
+    /* verilator lint_on UNUSEDSIGNAL */
     wire wb_cpu_we;
     wire [3:0] wb_cpu_sel;
     wire [31:0] wb_cpu_dat;
@@ -235,6 +237,7 @@ module soc
         .wb_rdt(wb_cpu_clock_rdt)
     );
 
+    /* verilator lint_off GENUNNAMED */
     generate
         if (ENABLE_UART) begin
             uart_device #(.ADDR_WIDTH(2)) uart_device(
@@ -278,6 +281,7 @@ module soc
             assign uart_tx = 1'b1;
         end
     endgenerate
+    /* verilator lint_on GENUNNAMED */
 
     vga_device #(.ADDR_WIDTH(25)) vga_device(
         .clk(clk),

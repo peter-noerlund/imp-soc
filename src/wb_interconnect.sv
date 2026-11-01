@@ -8,7 +8,9 @@ module wb_interconnect
     (
         //! @virtualbus WB_IN @dir input Wishbone input bus
         input wire wb_in_stb,                           //! Wishbone signal STB_I
+        /* verilator lint_off UNUSEDSIGNAL */
         input wire [ADDR_WIDTH - 1 : 0] wb_in_adr,      //! Wishbone signal ADR_I
+        /* verilator lint_on UNUSEDSIGNAL */
         output wire wb_in_ack,                          //! Wishbone signal ACK_O
         output wire wb_in_err,                          //! Wishbone signal ERR_O
         output wire wb_in_rty,                          //! Wishbone signal RTY_O

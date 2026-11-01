@@ -66,7 +66,7 @@ module vga_renderer
     // Each pixel is repeated 4 cycles
     assign pixel_idx = vga_hpos[4:2];
     assign pixel_group_idx = pixel_idx[2:1];
-    assign pixel_group_subpixel_idx = vga_hpos[2];
+    assign pixel_group_subpixel_idx = pixel_idx[0];
 
     // Each chunk represents 8 pixels
     assign chunk_idx = vga_hpos[9:5];

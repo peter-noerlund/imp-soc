@@ -58,7 +58,7 @@ harden:
 	./tt/tt_tool.py --print-cell-category >> summary.md
 
 lint:
-	verilator --lint-only $(VERILOG_SOURCES)
+	verilator --lint-only -Wall $(VERILOG_SOURCES)
 
 test:
 	$(MAKE) -C test

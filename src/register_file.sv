@@ -22,11 +22,8 @@ module register_file
     logic [31:0] regs [12:0];
     logic active;
     logic [4:0] cnt;
-    wire [15:0] rdata;
     logic ready;
     wire [15:0] regout;
-
-    genvar i;
 
     assign rf_ready = ready || rf_wreq;
     assign rf_rdata0 = regout[rf_rreg0];

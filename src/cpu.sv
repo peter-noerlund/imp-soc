@@ -25,11 +25,13 @@ module cpu
     wire rf_rreq;
     wire rf_wreq;
     wire rf_ready;
+    /* verilator lint_off UNUSEDSIGNAL */
     wire [4:0] rf_wreg0;
-    wire rf_wen0;
-    wire rf_wdata0;
     wire [4:0] rf_rreg0;
     wire [4:0] rf_rreg1;
+    /* verilator lint_on UNUSEDSIGNAL */
+    wire rf_wen0;
+    wire rf_wdata0;
     wire rf_rdata0;
     wire rf_rdata1;
 
