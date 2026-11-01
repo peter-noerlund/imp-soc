@@ -31,19 +31,19 @@ all: lint
 fpga: pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
 
 pico_ice/pico_ice_pll.v:
-	icepll -q -i 48 -o 25.075 -p -m -f $@
+	icepll -q -i 48 -o 25.175 -p -m -f $@
 
 pico_ice/pico_ice.json: $(VERILOG_SOURCES) pico_ice/pico_ice_top.sv pico_ice/pico_ice_pll.v
 	yosys -q -p "synth_ice40 -device u -top pico_ice_top -dff -retime -spram -dsp -noabc9 -abc2 -json $@" -DFPGA -DPICO_ICE -l pico_ice/pico_ice.log $^
 
 pico_ice/pico_ice.asc: pico_ice/pico_ice.pcf pico_ice/pico_ice.json
-	nextpnr-ice40 -q --up5k --package sg48 --freq 25.075 --asc $@ --json pico_ice/pico_ice.json --pcf pico_ice/pico_ice.pcf
+	nextpnr-ice40 -q --up5k --package sg48 --freq 25.175 --asc $@ --json pico_ice/pico_ice.json --pcf pico_ice/pico_ice.pcf
 
 pico_ice/pico_ice.bin: pico_ice/pico_ice.asc
 	icepack $^ $@
 
 pico_ice/pico_ice_timing.txt: pico_ice/pico_ice.asc pico_ice/pico_ice.pcf
-	icetime -p pico_ice/pico_ice.pcf -r $@ -d up5k -c 25.075 pico_ice/pico_ice.asc
+	icetime -p pico_ice/pico_ice.pcf -r $@ -d up5k -c 25.175 pico_ice/pico_ice.asc
 
 src/config_merged.json: src/config.json info.yaml
 	./tt/tt-tool.py --create-user-config
