@@ -12,6 +12,9 @@ module wb_arbiter
         parameter int SEL_WIDTH=DATA_WIDTH / 8  //! Selector width
     )
     (
+        input wire clk,
+        input wire rst,
+
         //! @virtualbus WB_IN0 @dir input Wishbone input bus
         input wire wb_in0_cyc,                          //! Wishbone signal CYC_I
         input wire wb_in0_stb,                          //! Wishbone signal STB_I
@@ -58,20 +61,44 @@ module wb_arbiter
         //! @end
     );
 
-    assign wb_out_cyc = wb_in0_cyc | wb_in1_cyc;
-    assign wb_out_stb = wb_in0_cyc ? wb_in0_stb : wb_in1_stb;
-    assign wb_out_adr = wb_in0_cyc ? wb_in0_adr : wb_in1_adr;
-    assign wb_out_we  = wb_in0_cyc ? wb_in0_we : wb_in1_we;
-    assign wb_out_sel = wb_in0_cyc ? wb_in0_sel : wb_in1_sel;
-    assign wb_out_dat = wb_in0_cyc ? wb_in0_dat : wb_in1_dat;
-    assign wb_out_cti = wb_in0_cyc ? wb_in0_cti : wb_in1_cti;
-    assign wb_out_bte = wb_in0_cyc ? wb_in0_bte : wb_in1_bte;
-    assign wb_in0_ack = wb_in0_cyc & wb_out_ack;
-    assign wb_in0_err = wb_in0_cyc & wb_out_err;
-    assign wb_in0_rty = wb_in0_cyc & wb_out_rty;
+    bit cyc;
+    bit gnt;
+    wire gnt0;
+    wire gnt1;
+
+    assign gnt0 = gnt;
+    assign gnt1 = ~gnt;
+
+    assign wb_in0_ack = wb_out_ack & gnt0;
+    assign wb_in0_rty = wb_out_err & gnt0;
+    assign wb_in0_err = wb_out_err & gnt0;
     assign wb_in0_rdt = wb_out_rdt;
-    assign wb_in1_ack = !wb_in0_cyc & wb_out_ack;
-    assign wb_in1_err = !wb_in0_cyc & wb_out_err;
-    assign wb_in1_rty = !wb_in0_cyc & wb_out_rty;
+
+    assign wb_in1_ack = wb_out_ack & gnt1;
+    assign wb_in1_rty = wb_out_rty & gnt1;
+    assign wb_in1_err = wb_out_err & gnt1;
     assign wb_in1_rdt = wb_out_rdt;
+
+    assign wb_out_cyc = cyc;
+    assign wb_out_stb = gnt0 ? wb_in0_stb : wb_in1_stb;
+    assign wb_out_adr = gnt0 ? wb_in0_adr : wb_in1_adr;
+    assign wb_out_we = gnt0 ? wb_in0_we : wb_in1_we;
+    assign wb_out_sel = gnt0 ? wb_in0_sel : wb_in1_sel;
+    assign wb_out_dat = gnt0 ? wb_in0_dat : wb_in1_dat;
+    assign wb_out_cti = gnt0 ? wb_in0_cti : wb_in1_cti;
+    assign wb_out_bte = gnt0 ? wb_in0_bte : wb_in1_bte;
+    
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            cyc <= 1'b0;
+            gnt <= 1'b0;
+        end else begin
+            if (cyc) begin
+                cyc <= (gnt0 & wb_in0_cyc) | (gnt1 & wb_in1_cyc);
+            end else begin
+                gnt <= wb_in0_cyc;
+                cyc <= wb_in0_cyc | wb_in1_cyc;
+            end
+        end
+    end
 endmodule
