@@ -142,7 +142,7 @@ module vga_renderer
         chunk = 24'h000000;
         for (i = 0; i != CHUNK_COUNT; i++) begin
             if (chunk_idx == CHUNK_IDX_WIDTH'(i)) begin
-                chunk = {vgactrl_memory[i * 24 + 7 -: 8], vgactrl_memory[i * 24 + 15 -: 8], vgactrl_memory[i * 24 + 23 -: 8]};
+                chunk = vgactrl_memory[i * 24 + 23 -: 24];
             end
         end
     end

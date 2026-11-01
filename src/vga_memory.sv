@@ -16,9 +16,9 @@ After `LINE_COUNT` lines, it resets
 module vga_memory
     #(
         parameter int ADDR_WIDTH=32,
-        parameter int WORD_COUNT=15,
-        parameter int WORD_SIZE=32,
-        parameter int LINE_COUNT=100
+        parameter int WORD_COUNT=16,
+        parameter int WORD_SIZE=24,
+        parameter int LINE_COUNT=96
     )
     (
         input wire clk,
@@ -73,7 +73,7 @@ module vga_memory
     assign wb_adr = {vgaconfig_addr[ADDR_WIDTH - 1 : LINE_WIDTH + WORD_WIDTH + 2], line_idx, word_idx, 2'b00};
     assign wb_we = 1'b0;
     assign wb_sel = 4'b1111;
-    assign wb_cti = word_idx == WORD_WIDTH'(WORD_COUNT - 2) ? CTI_END_OF_BURST : CTI_INCREMENT;
+    assign wb_cti = word_idx == WORD_WIDTH'(WORD_COUNT - 1) ? CTI_END_OF_BURST : CTI_INCREMENT;
     assign wb_bte = BTE_LINEAR;
     assign wb_dat = 32'h00000000;
     assign ack = cyc & (wb_ack | wb_rty | wb_err);
@@ -124,9 +124,17 @@ module vga_memory
     // Buffer
     always_ff @ (posedge clk) begin
         if (!rst && ack) begin
-            // Byte layout is 00rrggbb 00RRGGBB 00aaabbb 00cccddd which translates to 00cccddd_00aaabbb_00RRGGBB_00rrggb
+            // Byte layout is 00rrggbb 00RRGGBB 0bbb0aaa 0ddd0ccc whish translates to 0ddd0ccc_0bbb0aaa_00RRGGBB_00rrggbb
             // VGA renderer expects rrggbb_RRGGBB_ddd_ccc_bbb_aaa
-            buffer <= {wb_rdt[5:0], wb_rdt[13:8], wb_rdt[26:24], wb_rdt[29:27], wb_rdt[18:16], wb_rdt[21:19]};
+            // TODO - Should the hardware convert 4 bits to 3 bit?
+            buffer <= {
+                wb_rdt[5:0],    // color 1
+                wb_rdt[13:8],   // color 2
+                wb_rdt[30:28],  // pixel group 4 (pixel 7 and 8)
+                wb_rdt[26:24],  // pixel group 3 (pixel 5 and 6)
+                wb_rdt[22:20],  // pixel group 2 (pixel 3 and 4)
+                wb_rdt[18:16]   // pixel group 1 (pixel 1 and 2)
+            };
         end
     end
 
