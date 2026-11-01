@@ -2,15 +2,19 @@
 
 /* verilator lint_off UNUSEDSIGNAL */
 module tt_um_pchri03_imp_soc
+    #(
+        parameter [0:0] ENABLE_CLOCK_DEVICE=1,
+        parameter [0:0] ENABLE_VGA_DEVICE=1
+    )
     (
+        input wire clk,
+        input wire rst_n,
+        input wire ena,
         input wire [7:0] ui_in,
         output wire [7:0] uo_out,
         input wire [7:0] uio_in,
         output wire [7:0] uio_out,
-        output wire [7:0] uio_oe,
-        input wire ena,
-        input wire clk,
-        input wire rst_n
+        output wire [7:0] uio_oe
     );
 
     assign uio_oe[0] = 1'b1;        // CS
@@ -19,22 +23,32 @@ module tt_um_pchri03_imp_soc
 
     assign uio_out[7] = 1'b1;
 
-    soc soc(
+    wire [4:0] leds;
+
+    soc #(
+        .ENABLE_CLOCK_DEVICE(ENABLE_CLOCK_DEVICE),
+        .ENABLE_LED_DEVICE(0),
+        .ENABLE_VGA_DEVICE(ENABLE_VGA_DEVICE)
+    ) soc(
         .clk(clk),
         .rst(!rst_n),
+
+        .leds(leds),
+
+        .vga_red({uo_out[0], uo_out[4]}),
+        .vga_green({uo_out[1], uo_out[5]}),
+        .vga_blue({uo_out[2], uo_out[6]}),
+        .vga_vsync(uo_out[3]),
+        .vga_hsync(uo_out[7]),
 
         .spi_sck(uio_out[3]),
         .spi_sio_in({uio_in[5:4], uio_in[2:1]}),
         .spi_sio_out({uio_out[5:4], uio_out[2:1]}),
         .spi_sio_oe({uio_oe[5:4], uio_oe[2:1]}),
         .spi_flash_ss_n(uio_out[0]),
-        .spi_psram_ss_n(uio_out[6]),
-
-        .vga_red({uo_out[0], uo_out[4]}),
-        .vga_green({uo_out[1], uo_out[5]}),
-        .vga_blue({uo_out[2], uo_out[6]}),
-        .vga_vsync(uo_out[3]),
-        .vga_hsync(uo_out[7])
+        .spi_psram_ss_n(uio_out[6])
     );
+
+    wire _unused = &{ena, ui_in};
 endmodule
 /* verilator lint_on UNUSEDSIGNAL */

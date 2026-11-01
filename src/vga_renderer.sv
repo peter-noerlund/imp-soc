@@ -106,7 +106,7 @@ module vga_renderer
     assign color2 = chunk[17:12];
 
     assign pixel0 = pixels[5:0];
-    assign pixel1 = pixels[5:0];
+    assign pixel1 = pixels[11:6];
     assign black = 6'b000000;
     assign pixel = pixel_idx ? pixel1 : pixel0;
     assign red = pixel[5:4];

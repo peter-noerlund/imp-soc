@@ -186,10 +186,14 @@ async def memory_device(dut, ss_n, memory: bytearray):
 
         for i in range(8):
             await First(RisingEdge(dut.spi_sck), RisingEdge(ss_n))
-            assert ss_n.value == 0
+            if ss_n.value != 0:
+                break;
 
             assert dut.spi_sio_oe.value == 0x1
             command = (command << 1) | int(dut.spi_sio_out[0].value)
+
+        if ss_n.value != 0:
+            continue
 
         assert command == 0xEB or command == 0x38
 

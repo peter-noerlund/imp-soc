@@ -10,20 +10,25 @@ module pico_ice_top
 
         output wire [7:0] ICE_PMOD0,
         //input wire [7:0] ICE_PMOD1,
-        inout wire [7:0] ICE_PMOD2
+        inout wire [7:0] ICE_PMOD2,
+
+        input wire SW2
     );
 
+    localparam [0:0] ENABLE_CLOCK_DEVICE = 0;
+    localparam [0:0] ENABLE_LED_DEVICE = 0;
+    localparam [0:0] ENABLE_VGA_DEVICE = 0;
+    
     // ICE_PMOD0 is used for VGA PMOD
     // ICE_PMOD1 is used for SNES PMOD
     // ICE_PMOD2 is used for QSPI and optionally Audio PMOD
 
     wire clk;
     wire clk_locked;
-    wire rst;
+    bit rst;
+    bit [3:0] rst_counter;
 
-    wire uart_tx;
-
-    // ICE_PMOD0
+    // ICE_PMOD2
     wire [7:0] pmod2_in;
     wire [7:0] pmod2_oe;
     wire [7:0] pmod2_out;
@@ -43,18 +48,20 @@ module pico_ice_top
     wire [1:0] vga_green;
     wire [1:0] vga_blue;
 
-    // Buffer
+    // VGA Buffer
     bit vga_vsync_buf;
     bit vga_hsync_buf;
     bit [1:0] vga_red_buf;
     bit [1:0] vga_green_buf;
     bit [1:0] vga_blue_buf;
 
-    assign LED_R = 1'b1;
-    assign LED_G = ~clk_locked;
-    assign LED_B = 1'b1;
+    // LEDs
+    wire [4:0] leds;
 
-    assign rst = ~clk_locked;
+    assign ICE_PMOD0 = {
+        vga_hsync_buf, vga_blue_buf[0], vga_green_buf[0], vga_red_buf[0],
+        vga_vsync_buf, vga_blue_buf[1], vga_green_buf[1], vga_red_buf[1]
+    };
 
     assign pmod2_oe[0] = 1'b1;      // CS0
     assign pmod2_oe[3] = 1'b1;      // SCK
@@ -68,10 +75,23 @@ module pico_ice_top
     assign spi_flash_ss_n = pmod2_out[0];
     assign spi_psram_ss_n = pmod2_out[6];
 
-    assign ICE_PMOD0 = {
-        vga_hsync_buf, vga_blue_buf[0], vga_green_buf[0], vga_red_buf[0],
-        vga_vsync_buf, vga_blue_buf[1], vga_green_buf[1], vga_red_buf[1]
-    };
+    initial begin
+        rst = 1'b1;
+        rst_counter = 4'd0;
+    end
+
+    always_ff @ (posedge clk) begin
+        if (!SW2 || !clk_locked) begin
+            rst <= 1'b1;
+            rst_counter <= 4'd0;
+        end else if (rst) begin
+            if (rst_counter == 4'd15) begin
+                rst <= 1'b0;
+            end else begin
+                rst_counter <= rst_counter + 4'd1;
+            end
+        end
+    end
 
     always_ff @ (posedge clk) begin
         vga_vsync_buf <= vga_vsync;
@@ -80,6 +100,22 @@ module pico_ice_top
         vga_green_buf <= vga_green;
         vga_blue_buf <= vga_blue;
     end
+
+    generate
+        if (ENABLE_LED_DEVICE) begin
+            assign LED_R = ~leds[0];
+            assign LED_G = ~leds[1];
+            assign LED_B = ~leds[2];            
+
+            wire _unused_leds = &{leds[4:3]};
+        end else begin
+            assign LED_R = 1'b1;
+            assign LED_G = 1'b0;
+            assign LED_B = 1'b1;
+
+            wire _unused_leds = &{leds};
+        end
+    endgenerate
 
     pll pll(
         .clock_in(ICE_CLK),
@@ -96,21 +132,27 @@ module pico_ice_top
         .D_IN_0(pmod2_in)
     );
 
-    soc soc(
+    soc #(
+        .ENABLE_CLOCK_DEVICE(ENABLE_CLOCK_DEVICE),
+        .ENABLE_LED_DEVICE(ENABLE_LED_DEVICE),
+        .ENABLE_VGA_DEVICE(ENABLE_VGA_DEVICE)
+    ) soc(
         .clk(clk),
         .rst(rst),
+
+        .leds(leds),
+
+        .vga_red(vga_red),
+        .vga_green(vga_green),
+        .vga_blue(vga_blue),
+        .vga_vsync(vga_vsync),
+        .vga_hsync(vga_hsync),
 
         .spi_sck(spi_sck),
         .spi_sio_out(spi_sio_out),
         .spi_sio_oe(spi_sio_oe),
         .spi_sio_in(spi_sio_in),
         .spi_flash_ss_n(spi_flash_ss_n),
-        .spi_psram_ss_n(spi_psram_ss_n),
-
-        .vga_red(vga_red),
-        .vga_green(vga_green),
-        .vga_blue(vga_blue),
-        .vga_vsync(vga_vsync),
-        .vga_hsync(vga_hsync)
+        .spi_psram_ss_n(spi_psram_ss_n)
     );
 endmodule

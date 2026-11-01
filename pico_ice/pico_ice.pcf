@@ -6,6 +6,8 @@ set_io --warn-no-port   LED_G   39
 set_io --warn-no-port   LED_B   40
 set_io --warn-no-port   LED_R   41
 
+set_io --warn-no-port   SW2     10
+
 # ICE_PMOD0 (lower left PMOD, near SW1, next to RP2040) [Represents uo]
 set_io --warn-no-port   ICE_PMOD0[0]    4
 set_io --warn-no-port   ICE_PMOD0[1]    2

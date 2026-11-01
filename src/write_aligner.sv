@@ -13,7 +13,9 @@ module write_aligner
     )
     (
         //! @virtualbus WB_IN @dir input Wishbone in
+        /* verilator lint_off UNUSEDSIGNAL */
         input wire [ADDR_WIDTH-1:0] wb_in_adr,      //! Wishbone signal ADR_I
+        /* verilator lint_on UNUSEDSIGNAL */
         input wire wb_in_we,                        //! Wishbone signal WE_I
         input wire [3:0] wb_in_sel,                 //! Wishbone signal SEL_I
         input wire [31:0] wb_in_dat,                //! Wishbone signal DAT_I

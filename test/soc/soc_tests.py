@@ -35,7 +35,7 @@ async def test_soc_vga(dut):
         flash[i * 4 + 2] = (instr >> 16) & 0xFF
         flash[i * 4 + 3] = (instr >> 24) & 0xFF
     cocotb.start_soon(utils.memory_device(dut, dut.spi_flash_ss_n, flash))
-
+    
     psram = bytearray(8 * 1024 * 1024)
     cocotb.start_soon(utils.memory_device(dut, dut.spi_psram_ss_n, psram))
 

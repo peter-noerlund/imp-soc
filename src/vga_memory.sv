@@ -24,7 +24,9 @@ module vga_memory
         input wire clk,
         input wire rst,
 
+        /* verilator lint_off UNUSEDSIGNAL */
         input wire [ADDR_WIDTH - 1 : 0] vgaconfig_addr, //! Base address
+        /* verilator lint_on UNUSEDSIGNAL */
 
         input wire vgactrl_read_req,                            //! Read line request
         output wire [WORD_COUNT * WORD_SIZE - 1 : 0] vgactrl_memory,   //! Memory
@@ -41,7 +43,9 @@ module vga_memory
         input wire wb_ack,                              //! Wishbone signal ACK_I
         input wire wb_rty,                              //! Wishbone signal RTY_I
         input wire wb_err,                              //! Wishbone signal ERR_I
+        /* verilator lint_off UNUSEDSIGNAL */
         input wire [31:0] wb_rdt                        //! Wishbone signal DAT_I
+        /* verilator lint_on UNUSEDSIGNAL */
         //! @end
     );
 

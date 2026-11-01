@@ -47,9 +47,11 @@ module led_device
 
     always_ff @ (posedge clk) begin
         if (rst) begin
-            leds_mem <= 3'b111;
-        end else if (wb_cyc && wb_stb && wb_we && wb_sel[0] == 1'b1) begin
+            leds_mem <= LED_WIDTH'(0);
+        end else if (wb_cyc && wb_stb && wb_we) begin
             leds_mem <= wb_dat[LED_WIDTH - 1 : 0];
         end
     end
+
+    wire _unused = &{wb_adr, wb_we, wb_sel, wb_dat, wb_dat, wb_cti, wb_bte};
 endmodule

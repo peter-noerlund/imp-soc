@@ -8,9 +8,7 @@ module wb_interconnect
     (
         //! @virtualbus WB_IN @dir input Wishbone input bus
         input wire wb_in_stb,                           //! Wishbone signal STB_I
-        /* verilator lint_off UNUSEDSIGNAL */
         input wire [ADDR_WIDTH - 1 : 0] wb_in_adr,      //! Wishbone signal ADR_I
-        /* verilator lint_on UNUSEDSIGNAL */
         output wire wb_in_ack,                          //! Wishbone signal ACK_O
         output wire wb_in_err,                          //! Wishbone signal ERR_O
         output wire wb_in_rty,                          //! Wishbone signal RTY_O
@@ -33,7 +31,15 @@ module wb_interconnect
         input wire [DATA_WIDTH - 1 : 0] wb_clock_rdt,    //! Wishbone signal DAT_I
         //! @end
 
-        //! @virtualbus WB_VGA @dir output Wishbone signals for UART device
+        //! @virtualbus WB_LED @dir output Wishbone signals for LED device
+        output wire wb_led_stb,                        //! Wishbone signal STB_O
+        input wire wb_led_ack,                         //! Wishbone signal ACK_I
+        input wire wb_led_err,                         //! Wishbone signal ERR_I
+        input wire wb_led_rty,                         //! Wishbone signal RTY_I
+        input wire [DATA_WIDTH - 1 : 0] wb_led_rdt,    //! Wishbone signal DAT_I
+        //! @end
+
+        //! @virtualbus WB_VGA @dir output Wishbone signals for VGA device
         output wire wb_vga_stb,                        //! Wishbone signal STB_O
         input wire wb_vga_ack,                         //! Wishbone signal ACK_I
         input wire wb_vga_err,                         //! Wishbone signal ERR_I
@@ -44,22 +50,28 @@ module wb_interconnect
 
     wire mem_sel;
     wire clock_sel;
+    wire led_sel;
     wire vga_sel;
 
     assign mem_sel = wb_in_adr[25] == 1'b0;                                 // Memory at 0x00000000 - 0x01FFFFFF (xxxx_xx0x_xxxx_xxxx_xxxx_xxxx_xxxx_xxxx)
-    assign clock_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3] == 1'b0;    // Clock  at 0x02000000 - 0x02000003 (xxxx_xx1x_xxxx_xxxx_xxxx_xxxx_xxxx_00xx)
+    assign clock_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3:2] == 2'b00;    // Clock  at 0x02000000 - 0x02000003 (xxxx_xx1x_xxxx_xxxx_xxxx_xxxx_xxxx_00xx)
+    assign led_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3:2] == 2'b01;      // Clock  at 0x02000000 - 0x02000003 (xxxx_xx1x_xxxx_xxxx_xxxx_xxxx_xxxx_01xx)
     assign vga_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3] == 1'b1;         // Video  at 0x02000008 - 0x0200000F (xxxx_xx1x_xxxx_xxxx_xxxx_xxxx_xxxx_1xxx)
 
     assign wb_mem_stb = wb_in_stb & mem_sel;
     assign wb_clock_stb = wb_in_stb & clock_sel;
+    assign wb_led_stb = wb_in_stb & led_sel;
     assign wb_vga_stb = wb_in_stb & vga_sel;
 
-    assign wb_in_ack = wb_mem_ack | wb_clock_ack | wb_vga_ack;
-    assign wb_in_err = wb_mem_err | wb_clock_err | wb_vga_err;
-    assign wb_in_rty = wb_mem_rty | wb_clock_rty | wb_vga_rty;
+    assign wb_in_ack = wb_mem_ack | wb_clock_ack | wb_led_ack | wb_vga_ack;
+    assign wb_in_rty = wb_mem_rty | wb_clock_rty | wb_led_rty | wb_vga_rty;
+    assign wb_in_err = wb_mem_err | wb_clock_err | wb_led_err | wb_vga_err;
 
     assign wb_in_rdt =
         mem_sel ? wb_mem_rdt :
         clock_sel ? wb_clock_rdt :
+        led_sel ? wb_led_rdt :
         wb_vga_rdt;
+
+    wire _unused = &{wb_in_adr[24:4], wb_in_adr[1:0]};
 endmodule

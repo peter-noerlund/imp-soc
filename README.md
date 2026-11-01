@@ -1,7 +1,7 @@
 # Memory map
 
-| Base                       | Description   |
-|----------------------------|---------------|
+| Base                      | Description   |
+|---------------------------|---------------|
 | `0x00000000 - 0x00FFFFFF` | Flash         |
 | `0x01000000 - 0x017FFFFF` | RAM A         |
 | `0x01800000 - 0x01FFFFFF` | RAM B         |
