@@ -69,7 +69,7 @@ module pico_ice_top
         .D_IN_0(pmod2_in)
     );
 
-    soc #(.ENABLE_UART(1)) soc(
+    soc #(.ENABLE_UART(0)) soc(
         .clk(clk),
         .rst(rst),
 

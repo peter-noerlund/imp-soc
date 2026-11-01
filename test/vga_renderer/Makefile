@@ -5,15 +5,15 @@ SIM = icarus
 TOPLEVEL_LANG = verilog
 
 # List of Verilog source files.
-VERILOG_SOURCES = $(CURDIR)/../../src/video_renderer.sv
+VERILOG_SOURCES = $(CURDIR)/../../src/vga_renderer.sv $(CURDIR)/../../src/vga_timing.sv
 
 # The name of the toplevel module/entity in your design.
-TOPLEVEL = video_renderer
+TOPLEVEL = vga_renderer
 
 # The Python modules which contain your testcases.
 # The current directory is included in the Python path,
 # so you can just specify the module name without the .py extension.
-COCOTB_TEST_MODULES = video_renderer_tests
+COCOTB_TEST_MODULES = vga_renderer_tests
 
 # Enable waveform generation.
 WAVES = 1
@@ -22,4 +22,4 @@ export PYTHONPATH = $(CURDIR)/../
 
 # Includes cocotb's Makefiles which define the build and simulation flows for each supported simulator.
 # This must be included *after* all of the variables above are defined.
-include $(shell cocotb-config --makefiles)/Makefile.sim
+include $(shell cocotb-config --makefiles)/Makefile.sim 

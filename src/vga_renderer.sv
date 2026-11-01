@@ -2,29 +2,16 @@
 
 module vga_renderer
     #(
-        parameter int ADDR_WIDTH=32
+        parameter int WORD_COUNT=15
     )
     (
         input wire clk,
         input wire rst,
 
         input wire vgaconfig_enabled,
-        input wire [ADDR_WIDTH - 1 : 0] vgaconfig_addr,
 
-        //! @virtualbus WB @dir output Wishbone bus
-        output wire wb_cyc,                         //! Wishbone CYC_O
-        output wire wb_stb,                         //! Wishbone STB_O
-        output wire [ADDR_WIDTH - 1 : 0] wb_adr,    //! Wishbone ADR_O
-        output wire wb_we,                          //! Wishbone WE_O
-        output wire [3:0] wb_sel,                   //! Wishbone SEL_O
-        output wire [2:0] wb_cti,                   //! Wishbone CTI_O
-        output wire [1:0] wb_bte,                   //! Wishbone BTE_O
-        output wire [31:0] wb_dat,                  //! Wishbone DAT_O
-        input wire wb_ack,                          //! Wishbone ACK_I
-        input wire wb_rty,                          //! Wishbone RTY_I
-        input wire wb_err,                          //! Wishbone ERR_I
-        input wire [31:0] wb_rdt,                   //! Wishbone DAT_I
-        //! @end
+        output wire vgactrl_read_req,
+        input wire [WORD_COUNT * 32 - 1 : 0] vgactrl_memory,
 
         //! @virtualbus VGA @dir output VGA
         output wire vga_hsync,                      //! VGA horizontal sync
@@ -35,153 +22,114 @@ module vga_renderer
         //! @end
     );
 
-    // One line is 60 bytes which takes 15 32-bit transfers.
-    // With traditional transfers, competing with the CPU, this may take as much as 1,680 cycles.
-    // With bursting, worst case timing is 336 cycles.
-    // Right border, front porch, sync time, back porch and left border combined is (32 + 24 + 136 + 160 + 32) 384 cycles,
-    // so we can initiate transfer when we reach the 160th pixel in the 7th line
+    localparam int CHUNK_IDX_WIDTH = $clog2(WORD_COUNT * 32 / 24);
 
-    localparam [2:0] CTI_CLASSIC = 3'b000;
-    localparam [2:0] CTI_INCREMENT = 3'b010;
-    localparam [2:0] CTI_END_OF_BURST = 3'b111;
+    localparam [2:0] PIXELS_BB = 3'b000;
+    localparam [2:0] PIXELS_B1 = 3'b001;
+    localparam [2:0] PIXELS_B2 = 3'b010;
+    localparam [2:0] PIXELS_1B = 3'b011;
+    localparam [2:0] PIXELS_11 = 3'b100;
+    localparam [2:0] PIXELS_12 = 3'b101;
+    localparam [2:0] PIXELS_2B = 3'b110;
+    // PIXELS_21 is not allowed
+    localparam [2:0] PIXELS_22 = 3'b111;
 
-    localparam [1:0] BTE_LINEAR = 2'b00;
-
-    wire vga_blank;
+    wire [1:0] red;
+    wire [1:0] green;
+    wire [1:0] blue;
+    wire [5:0] pixel;
+`ifdef PICO_ICE
+    wire [9:0] vga_hpos;
+`else
     wire [10:0] vga_hpos;
+`endif
     wire [9:0] vga_vpos;
-
-    wire [2:0] line_mask;
-    wire last_subline;
-
+    wire vga_blank;
+    wire [CHUNK_IDX_WIDTH - 1 : 0] chunk_idx;
+    wire [2:0] pixel_idx;
+    bit active;
     wire [5:0] color1;
     wire [5:0] color2;
-    bit [5:0] pixel0_color;
-    bit [5:0] pixel1_color;
-    wire [5:0] pixel_color;
-    wire [1:0] pixel_red;
-    wire [1:0] pixel_green;
-    wire [1:0] pixel_blue;
-    wire [11:0] pixel_groups;
+    bit [5:0] pixel0;
+    bit [5:0] pixel1;
     wire [2:0] pixel_group;
-    wire [23:0] current_chunk;
+    wire [1:0] pixel_group_idx;
+    wire pixel_group_subpixel_idx;
+    bit [23:0] chunk;
 
-    bit cyc;
-    wire ack;
+    int i;
+    
+    assign vga_red = vga_blank ? 2'b00 : red;
+    assign vga_green = vga_blank ? 2'b00 : green;
+    assign vga_blue = vga_blank ? 2'b00 : blue;
 
-    bit write_latch0;
-    bit write_latch1;
-    bit [31:0] write_buffer;
-    bit [479:0] memory;
-    bit [3:0] write_adr;
-    bit [3:0] adr_lo;
-    bit [6:0] adr_hi;
+    // Each pixel is repeated 4 cycles
+    assign pixel_idx = vga_hpos[4:2];
+    assign pixel_group_idx = pixel_idx[2:1];
+    assign pixel_group_subpixel_idx = vga_hpos[2];
 
-    genvar i;
-    integer j;
+    // Each chunk represents 8 pixels
+    assign chunk_idx = vga_hpos[9:5];
 
-    assign wb_cyc = cyc;
-    assign wb_stb = cyc;
-    assign wb_adr = {vgaconfig_addr[ADDR_WIDTH - 1 : 12], adr_hi, adr_lo, 2'b00};
-    assign wb_we = 1'b0;
-    assign wb_sel = 4'b1111;
-    assign wb_cti = adr_lo == 4'd14 ? CTI_END_OF_BURST : CTI_INCREMENT;
-    assign wb_bte = BTE_LINEAR;
-    assign wb_dat = 32'h00000000;
+    assign color1 = chunk[23:18];
+    assign color2 = chunk[17:12];
+    assign pixel_group = chunk[pixel_group_idx * 3 + 2 -: 3];
 
-    assign ack = wb_ack | wb_rty | wb_err;
+    assign pixel = pixel_group_subpixel_idx ? pixel1 : pixel0;
+    assign red = pixel[5:4];
+    assign green = pixel[3:2];
+    assign blue = pixel[1:0];
 
-    assign color1 = current_chunk[23:18];
-    assign color2 = current_chunk[17:12];
-    assign pixel_groups = current_chunk[11:0];
-    assign pixel_group = pixel_groups[vga_hpos[3:2] * 3 + 2 -: 3];
-    assign pixel_color = vga_hpos[2] == 1'b1 ? pixel1_color : pixel0_color;
-    assign pixel_red = pixel_color[5:4];
-    assign pixel_green = pixel_color[3:2];
-    assign pixel_blue = pixel_color[1:0];
-
-    assign vga_red = vga_blank ? 2'b00 : pixel_red;
-    assign vga_green = vga_blank ? 2'b00 : pixel_green;
-    assign vga_blue = vga_blank ? 2'b00 : pixel_blue;
-
-    assign current_chunk = memory[vga_hpos[7:3] * 24 + 23 -: 24];
+    assign vgactrl_read_req = vga_hpos == 11'd639 && vga_vpos[1:0] == 2'b11 && active && vgaconfig_enabled;
 
     always_comb begin
         case (pixel_group)
-            3'd0: pixel0_color = 6'b000000; // 0 0
-            3'd1: pixel0_color = color1;    // 0 1
-            3'd2: pixel0_color = color2;    // 0 2
-            3'd3: pixel0_color = 6'b000000; // 1 0
-            3'd4: pixel0_color = color1;    // 1 1
-            3'd5: pixel0_color = color2;    // 1 2
-            3'd6: pixel0_color = 6'b000000; // 2 0
-            3'd7: pixel0_color = color2;    // 2 2
+            PIXELS_BB: pixel0 = 6'b000000;
+            PIXELS_B1: pixel0 = 6'b000000;
+            PIXELS_B2: pixel0 = 6'b000000;
+            PIXELS_1B: pixel0 = color1;
+            PIXELS_11: pixel0 = color1;
+            PIXELS_12: pixel0 = color1;
+            PIXELS_2B: pixel0 = color2;
+            PIXELS_22: pixel0 = color2;
         endcase
     end
 
     always_comb begin
         case (pixel_group)
-            3'd0: pixel1_color = 6'b000000; // 0 0
-            3'd1: pixel1_color = 6'b000000; // 0 1
-            3'd2: pixel1_color = 6'b000000; // 0 2
-            3'd3: pixel1_color = color1;    // 1 0
-            3'd4: pixel1_color = color1;    // 1 1
-            3'd5: pixel1_color = color1;    // 1 2
-            3'd6: pixel1_color = color2;    // 2 0
-            3'd7: pixel1_color = color2;    // 2 2
+            PIXELS_BB: pixel1 = 6'b000000;
+            PIXELS_B1: pixel1 = color1;
+            PIXELS_B2: pixel1 = color2;
+            PIXELS_1B: pixel1 = 6'b000000;
+            PIXELS_11: pixel1 = color1;
+            PIXELS_12: pixel1 = color2;
+            PIXELS_2B: pixel1 = 6'b000000;
+            PIXELS_22: pixel1 = color2;
         endcase
     end
 
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            cyc <= 1'b0;
-        end else if (vga_hpos == 11'd639 && vga_vpos[1:0] == 2'b11 && adr_hi != 7'd100) begin
-            cyc <= 1'b1;
-        end else if (cyc && ack && adr_lo == 4'd14) begin
-            cyc <= 1'b0;
-        end
-    end
-
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            adr_hi <= 7'd1;
-        end else if (cyc && ack && adr_lo == 4'd14) begin
-            adr_hi <= adr_hi + 7'd1; // FIXME
-        end
-    end
-
-    always_ff @ (posedge clk) begin
-        if (rst) begin
-            adr_lo <= 4'd0;
-        end else if (cyc & ack) begin
-            if (adr_lo <= 4'd14) begin
-                adr_lo <= 4'd0;
-            end else begin
-                adr_lo <= adr_lo + 4'd1;
+    always_comb begin
+        chunk = 24'h000000;
+        for (i = 0; i != WORD_COUNT; i++) begin
+            if (chunk_idx == CHUNK_IDX_WIDTH'(i)) begin
+                chunk = vgactrl_memory[i * 24 + 23 -: 24];
             end
         end
     end
 
     always_ff @ (posedge clk) begin
-        if (!rst && cyc && ack) begin
-            write_buffer <= wb_rdt;
+        if (rst) begin
+            active <= 1'b1;
+        end else begin
+            if (vga_vpos == 10'd401) begin
+                active <= 1'b0; // TODO - Do not fetch after last line
+            end
+            if (vga_vpos == 10'd0) begin
+                active <= 1'b1; // TODO - Wait until line -1
+            end
         end
     end
 
-    always_ff @ (posedge clk) begin
-        write_latch0 <= !rst && cyc && ack;
-    end
-
-    always_ff @ (posedge clk) begin
-        write_latch1 <= !rst && write_latch0;
-    end
-
-    always_ff @ (posedge clk) begin
-        if (!rst && cyc && ack) begin
-            write_adr <= adr_lo;
-        end
-    end
-  
 `ifdef PICO_ICE
     // PICO-ICE runs at 25.075 MHz and outputs VGA 640x480 at 60Hz
     vga_timing #(
@@ -222,27 +170,5 @@ module vga_renderer
         .vga_vsync(vga_vsync),
         .vga_blank(vga_blank)
     );
-`endif
-
-`ifdef FPGA
-    // Use flip-flops on FPGA
-
-    for (i = 0; i != 15; i++) begin
-        always_ff @ (posedge clk) begin
-            if (write_latch1 && write_adr == 4'(i)) begin
-                memory[i * 32 + 31 -: 32] <= write_buffer;
-            end
-        end
-    end
-`else
-    // Use latch on ASIC
-
-    for (i = 0; i != 15; i++) begin
-        always_latch begin
-            if (write_latch1 && write_adr == 4'(i)) begin
-                memory[i * 32 + 31 -: 32] = write_buffer;
-            end
-        end
-    end
 `endif
 endmodule

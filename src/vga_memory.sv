@@ -24,8 +24,9 @@ module vga_memory
         input wire rst,
 
         input wire [ADDR_WIDTH - 1 : 0] vgaconfig_addr, //! Base address
-        input wire read_req,                            //! Read line request
-        output wire [WORD_COUNT * 32 - 1 : 0] memory,   //! Memory
+
+        input wire vgactrl_read_req,                            //! Read line request
+        output wire [WORD_COUNT * 32 - 1 : 0] vgactrl_memory,   //! Memory
 
         //! @virtualbus WB @dir output Wishbone bus
         output wire wb_cyc,                             //! Wishbone signal CYC_O
@@ -77,7 +78,7 @@ module vga_memory
     assign ack = cyc & (wb_ack | wb_rty | wb_err);
     assign last_word = word_idx == WORD_WIDTH'(WORD_COUNT - 1);
 
-    assign memory = mem;
+    assign vgactrl_memory = mem;
 
     // Word index
     always_ff @ (posedge clk) begin
@@ -110,7 +111,7 @@ module vga_memory
         if (rst) begin
             cyc <= 1'b0;
         end else begin
-            if (!cyc && read_req) begin
+            if (!cyc && vgactrl_read_req) begin
                 cyc <= 1'b1;
             end
             if (ack && last_word) begin

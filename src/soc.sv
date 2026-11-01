@@ -2,7 +2,7 @@
 
 module soc
     #(
-        parameter int ENABLE_UART=0
+        parameter [0:0] ENABLE_UART=0
     )
     (
         input wire clk,
@@ -25,120 +25,185 @@ module soc
     );
 
     // Main wishbone bus
-    wire wb_cyc;
-    wire wb_stb;
-    wire [31:0] wb_adr;
-    wire wb_we;
-    wire [3:0] wb_sel;
-    wire [31:0] wb_dat;
-    wire [2:0] wb_cti;
-    wire [1:0] wb_bte;
-    wire wb_ack;
-    wire wb_rty;
-    wire wb_err;
-    wire [31:0] wb_rdt;
-
+    wire wb_cpu_cyc;
+    wire wb_cpu_stb;
+    wire [31:0] wb_cpu_adr;
+    wire wb_cpu_we;
+    wire [3:0] wb_cpu_sel;
+    wire [31:0] wb_cpu_dat;
+    wire [2:0] wb_cpu_cti;
+    wire [1:0] wb_cpu_bte;
+    wire wb_cpu_ack;
+    wire wb_cpu_rty;
+    wire wb_cpu_err;
+    wire [31:0] wb_cpu_rdt;
 
     // Memory
-    wire wb_mem_stb;
-    wire wb_mem_ack;
-    wire wb_mem_err;
-    wire wb_mem_rty;
-    wire [31:0] wb_mem_rdt;
+    wire wb_cpu_mem_stb;
+    wire wb_cpu_mem_ack;
+    wire wb_cpu_mem_err;
+    wire wb_cpu_mem_rty;
+    wire [31:0] wb_cpu_mem_rdt;
 
     // Clock
-    wire wb_clock_stb;
-    wire wb_clock_ack;
-    wire wb_clock_err;
-    wire wb_clock_rty;
-    wire [31:0] wb_clock_rdt;
+    wire wb_cpu_clock_stb;
+    wire wb_cpu_clock_ack;
+    wire wb_cpu_clock_err;
+    wire wb_cpu_clock_rty;
+    wire [31:0] wb_cpu_clock_rdt;
 
     // UART
-    wire wb_uart_stb;
-    wire wb_uart_ack;
-    wire wb_uart_err;
-    wire wb_uart_rty;
-    wire [31:0] wb_uart_rdt;
+    wire wb_cpu_uart_stb;
+    wire wb_cpu_uart_ack;
+    wire wb_cpu_uart_err;
+    wire wb_cpu_uart_rty;
+    wire [31:0] wb_cpu_uart_rdt;
 
     // VGA
+    wire wb_cpu_vga_stb;
+    wire wb_cpu_vga_ack;
+    wire wb_cpu_vga_err;
+    wire wb_cpu_vga_rty;
+    wire [31:0] wb_cpu_vga_rdt;
+
+    // VGA Memory bus
+    wire wb_vga_cyc;
     wire wb_vga_stb;
+    wire [24:0] wb_vga_adr;
+    wire wb_vga_we;
+    wire [3:0] wb_vga_sel;
+    wire [31:0] wb_vga_dat;
+    wire [2:0] wb_vga_cti;
+    wire [1:0] wb_vga_bte;
     wire wb_vga_ack;
-    wire wb_vga_err;
     wire wb_vga_rty;
+    wire wb_vga_err;
     wire [31:0] wb_vga_rdt;
 
+    // Memory bus
+    wire wb_mem_cyc;
+    wire wb_mem_stb;
+    wire [24:0] wb_mem_adr;
+    wire wb_mem_we;
+    wire [3:0] wb_mem_sel;
+    wire [31:0] wb_mem_dat;
+    wire [2:0] wb_mem_cti;
+    wire [1:0] wb_mem_bte;
+    wire wb_mem_ack;
+    wire wb_mem_rty;
+    wire wb_mem_err;
+    wire [31:0] wb_mem_rdt;
+    
     wire vgaconfig_enabled;
-    wire [25:0] vgaconfig_addr;
+    wire [24:0] vgaconfig_addr;
 
-    assign vga_hsync = 1'b1;
-    assign vga_vsync = 1'b1;
-    assign vga_red = 2'b00;
-    assign vga_green = 2'b00;
-    assign vga_blue = 2'b00;
+    wire vgactrl_read_req;
+    wire [15 * 32 - 1 : 0] vgactrl_memory;
 
     cpu cpu(
         .clk(clk),
         .rst(rst),
 
-        .wb_cyc(wb_cyc),
-        .wb_stb(wb_stb),
-        .wb_adr(wb_adr),
-        .wb_we(wb_we),
-        .wb_sel(wb_sel),
-        .wb_dat(wb_dat),
-        .wb_cti(wb_cti),
-        .wb_bte(wb_bte),
-        .wb_ack(wb_ack),
-        .wb_rty(wb_rty),
-        .wb_err(wb_err),
-        .wb_rdt(wb_rdt)
+        .wb_cyc(wb_cpu_cyc),
+        .wb_stb(wb_cpu_stb),
+        .wb_adr(wb_cpu_adr),
+        .wb_we(wb_cpu_we),
+        .wb_sel(wb_cpu_sel),
+        .wb_dat(wb_cpu_dat),
+        .wb_cti(wb_cpu_cti),
+        .wb_bte(wb_cpu_bte),
+        .wb_ack(wb_cpu_ack),
+        .wb_rty(wb_cpu_rty),
+        .wb_err(wb_cpu_err),
+        .wb_rdt(wb_cpu_rdt)
     );
 
     wb_interconnect #(.ADDR_WIDTH(27)) wb_interconnect(
-        .wb_in_stb(wb_stb),
-        .wb_in_adr(wb_adr[26:0]),
-        .wb_in_ack(wb_ack),
-        .wb_in_rty(wb_rty),
-        .wb_in_err(wb_err),
-        .wb_in_rdt(wb_rdt),
+        .wb_in_stb(wb_cpu_stb),
+        .wb_in_adr(wb_cpu_adr[26:0]),
+        .wb_in_ack(wb_cpu_ack),
+        .wb_in_rty(wb_cpu_rty),
+        .wb_in_err(wb_cpu_err),
+        .wb_in_rdt(wb_cpu_rdt),
 
-        .wb_mem_stb(wb_mem_stb),
-        .wb_mem_ack(wb_mem_ack),
-        .wb_mem_rty(wb_mem_rty),
-        .wb_mem_err(wb_mem_err),
-        .wb_mem_rdt(wb_mem_rdt),
+        .wb_mem_stb(wb_cpu_mem_stb),
+        .wb_mem_ack(wb_cpu_mem_ack),
+        .wb_mem_rty(wb_cpu_mem_rty),
+        .wb_mem_err(wb_cpu_mem_err),
+        .wb_mem_rdt(wb_cpu_mem_rdt),
 
-        .wb_clock_stb(wb_clock_stb),
-        .wb_clock_ack(wb_clock_ack),
-        .wb_clock_rty(wb_clock_rty),
-        .wb_clock_err(wb_clock_err),
-        .wb_clock_rdt(wb_clock_rdt),
+        .wb_clock_stb(wb_cpu_clock_stb),
+        .wb_clock_ack(wb_cpu_clock_ack),
+        .wb_clock_rty(wb_cpu_clock_rty),
+        .wb_clock_err(wb_cpu_clock_err),
+        .wb_clock_rdt(wb_cpu_clock_rdt),
 
-        .wb_uart_stb(wb_uart_stb),
-        .wb_uart_ack(wb_uart_ack),
-        .wb_uart_rty(wb_uart_rty),
-        .wb_uart_err(wb_uart_err),
-        .wb_uart_rdt(wb_uart_rdt),
+        .wb_uart_stb(wb_cpu_uart_stb),
+        .wb_uart_ack(wb_cpu_uart_ack),
+        .wb_uart_rty(wb_cpu_uart_rty),
+        .wb_uart_err(wb_cpu_uart_err),
+        .wb_uart_rdt(wb_cpu_uart_rdt),
 
-        .wb_vga_stb(wb_vga_stb),
-        .wb_vga_ack(wb_vga_ack),
-        .wb_vga_rty(wb_vga_rty),
-        .wb_vga_err(wb_vga_err),
-        .wb_vga_rdt(wb_vga_rdt)
+        .wb_vga_stb(wb_cpu_vga_stb),
+        .wb_vga_ack(wb_cpu_vga_ack),
+        .wb_vga_rty(wb_cpu_vga_rty),
+        .wb_vga_err(wb_cpu_vga_err),
+        .wb_vga_rdt(wb_cpu_vga_rdt)
+    );
+
+    wb_arbiter #(.ADDR_WIDTH(25)) arbiter(
+        .wb_in0_cyc(wb_vga_cyc),
+        .wb_in0_stb(wb_vga_stb),
+        .wb_in0_adr(wb_vga_adr),
+        .wb_in0_we(wb_vga_we),
+        .wb_in0_sel(wb_vga_sel),
+        .wb_in0_dat(wb_vga_dat),
+        .wb_in0_cti(wb_vga_cti),
+        .wb_in0_bte(wb_vga_bte),
+        .wb_in0_ack(wb_vga_ack),
+        .wb_in0_rty(wb_vga_rty),
+        .wb_in0_err(wb_vga_err),
+        .wb_in0_rdt(wb_vga_rdt),
+
+        .wb_in1_cyc(wb_cpu_cyc),
+        .wb_in1_stb(wb_cpu_mem_stb),
+        .wb_in1_adr(wb_cpu_adr[24:0]),
+        .wb_in1_we(wb_cpu_we),
+        .wb_in1_sel(wb_cpu_sel),
+        .wb_in1_dat(wb_cpu_dat),
+        .wb_in1_cti(wb_cpu_cti),
+        .wb_in1_bte(wb_cpu_bte),
+        .wb_in1_ack(wb_cpu_mem_ack),
+        .wb_in1_rty(wb_cpu_mem_rty),
+        .wb_in1_err(wb_cpu_mem_err),
+        .wb_in1_rdt(wb_cpu_mem_rdt),
+
+        .wb_out_cyc(wb_mem_cyc),
+        .wb_out_stb(wb_mem_stb),
+        .wb_out_adr(wb_mem_adr),
+        .wb_out_we(wb_mem_we),
+        .wb_out_sel(wb_mem_sel),
+        .wb_out_dat(wb_mem_dat),
+        .wb_out_cti(wb_mem_cti),
+        .wb_out_bte(wb_mem_bte),
+        .wb_out_ack(wb_mem_ack),
+        .wb_out_rty(wb_mem_rty),
+        .wb_out_err(wb_mem_err),
+        .wb_out_rdt(wb_mem_rdt)
     );
 
     memory_device memory_device(
         .clk(clk),
         .rst(rst),
 
-        .wb_cyc(wb_cyc),
+        .wb_cyc(wb_mem_cyc),
         .wb_stb(wb_mem_stb),
-        .wb_adr(wb_adr[24:0]),
-        .wb_we(wb_we),
-        .wb_sel(wb_sel),
-        .wb_dat(wb_dat),
-        .wb_cti(wb_cti),
-        .wb_bte(wb_bte),
+        .wb_adr(wb_mem_adr[24:0]),
+        .wb_we(wb_mem_we),
+        .wb_sel(wb_mem_sel),
+        .wb_dat(wb_mem_dat),
+        .wb_cti(wb_mem_cti),
+        .wb_bte(wb_mem_bte),
         .wb_ack(wb_mem_ack),
         .wb_rty(wb_mem_rty),
         .wb_err(wb_mem_err),
@@ -156,58 +221,120 @@ module soc
         .clk(clk),
         .rst(rst),
 
-        .wb_cyc(wb_cyc),
-        .wb_stb(wb_clock_stb),
-        .wb_adr(wb_adr[1:0]),
-        .wb_we(wb_we),
-        .wb_sel(wb_sel),
-        .wb_dat(wb_dat),
-        .wb_cti(wb_cti),
-        .wb_bte(wb_bte),
-        .wb_ack(wb_clock_ack),
-        .wb_rty(wb_clock_rty),
-        .wb_err(wb_clock_err),
-        .wb_rdt(wb_clock_rdt)
+        .wb_cyc(wb_cpu_cyc),
+        .wb_stb(wb_cpu_clock_stb),
+        .wb_adr(wb_cpu_adr[1:0]),
+        .wb_we(wb_cpu_we),
+        .wb_sel(wb_cpu_sel),
+        .wb_dat(wb_cpu_dat),
+        .wb_cti(wb_cpu_cti),
+        .wb_bte(wb_cpu_bte),
+        .wb_ack(wb_cpu_clock_ack),
+        .wb_rty(wb_cpu_clock_rty),
+        .wb_err(wb_cpu_clock_err),
+        .wb_rdt(wb_cpu_clock_rdt)
     );
 
-    uart_device #(.ADDR_WIDTH(2)) uart_device(
+    generate
+        if (ENABLE_UART) begin
+            uart_device #(.ADDR_WIDTH(2)) uart_device(
+                .clk(clk),
+                .rst(rst),
+
+                .wb_cyc(wb_cpu_cyc),
+                .wb_stb(wb_cpu_uart_stb),
+                .wb_adr(wb_cpu_adr[1:0]),
+                .wb_we(wb_cpu_we),
+                .wb_sel(wb_cpu_sel),
+                .wb_dat(wb_cpu_dat),
+                .wb_cti(wb_cpu_cti),
+                .wb_bte(wb_cpu_bte),
+                .wb_ack(wb_cpu_uart_ack),
+                .wb_rty(wb_cpu_uart_rty),
+                .wb_err(wb_cpu_uart_err),
+                .wb_rdt(wb_cpu_uart_rdt),
+
+                .uart_tx(uart_tx)
+            );
+        end else begin
+            dummy_device #(.ADDR_WIDTH(2)) dummy_device(
+                .clk(clk),
+                .rst(rst),
+
+                .wb_cyc(wb_cpu_cyc),
+                .wb_stb(wb_cpu_uart_stb),
+                .wb_adr(wb_cpu_adr[1:0]),
+                .wb_we(wb_cpu_we),
+                .wb_sel(wb_cpu_sel),
+                .wb_dat(wb_cpu_dat),
+                .wb_cti(wb_cpu_cti),
+                .wb_bte(wb_cpu_bte),
+                .wb_ack(wb_cpu_uart_ack),
+                .wb_rty(wb_cpu_uart_rty),
+                .wb_err(wb_cpu_uart_err),
+                .wb_rdt(wb_cpu_uart_rdt)
+            );
+
+            assign uart_tx = 1'b1;
+        end
+    endgenerate
+
+    vga_device #(.ADDR_WIDTH(25)) vga_device(
         .clk(clk),
         .rst(rst),
 
-        .wb_cyc(wb_cyc),
-        .wb_stb(wb_uart_stb),
-        .wb_adr(wb_adr[1:0]),
-        .wb_we(wb_we),
-        .wb_sel(wb_sel),
-        .wb_dat(wb_dat),
-        .wb_cti(wb_cti),
-        .wb_bte(wb_bte),
-        .wb_ack(wb_uart_ack),
-        .wb_rty(wb_uart_rty),
-        .wb_err(wb_uart_err),
-        .wb_rdt(wb_uart_rdt),
-
-        .uart_tx(uart_tx)
-    );
-
-    vga_device #(.ADDR_WIDTH(26)) vga_device(
-        .clk(clk),
-        .rst(rst),
-
-        .wb_cyc(wb_cyc),
-        .wb_stb(wb_vga_stb),
-        .wb_adr(wb_adr[25:0]),
-        .wb_we(wb_we),
-        .wb_sel(wb_sel),
-        .wb_dat(wb_dat),
-        .wb_cti(wb_cti),
-        .wb_bte(wb_bte),
-        .wb_ack(wb_vga_ack),
-        .wb_rty(wb_vga_rty),
-        .wb_err(wb_vga_err),
-        .wb_rdt(wb_vga_rdt),
+        .wb_cyc(wb_cpu_cyc),
+        .wb_stb(wb_cpu_vga_stb),
+        .wb_adr(wb_cpu_adr[24:0]),
+        .wb_we(wb_cpu_we),
+        .wb_sel(wb_cpu_sel),
+        .wb_dat(wb_cpu_dat),
+        .wb_cti(wb_cpu_cti),
+        .wb_bte(wb_cpu_bte),
+        .wb_ack(wb_cpu_vga_ack),
+        .wb_rty(wb_cpu_vga_rty),
+        .wb_err(wb_cpu_vga_err),
+        .wb_rdt(wb_cpu_vga_rdt),
         
         .vgaconfig_enabled(vgaconfig_enabled),
         .vgaconfig_addr(vgaconfig_addr)
+    );
+
+    vga_memory #(.ADDR_WIDTH(25)) vga_memory(
+        .clk(clk),
+        .rst(rst),
+
+        .vgaconfig_addr(vgaconfig_addr),
+        .vgactrl_read_req(vgactrl_read_req),
+        .vgactrl_memory(vgactrl_memory),
+
+        .wb_cyc(wb_vga_cyc),
+        .wb_stb(wb_vga_stb),
+        .wb_adr(wb_vga_adr),
+        .wb_we(wb_vga_we),
+        .wb_sel(wb_vga_sel),
+        .wb_cti(wb_vga_cti),
+        .wb_bte(wb_vga_bte),
+        .wb_dat(wb_vga_dat),
+        .wb_ack(wb_vga_ack),
+        .wb_rty(wb_vga_rty),
+        .wb_err(wb_vga_err),
+        .wb_rdt(wb_vga_rdt)
+    );
+
+    vga_renderer vga_renderer(
+        .clk(clk),
+        .rst(rst),
+
+        .vgaconfig_enabled(vgaconfig_enabled),
+
+        .vgactrl_read_req(vgactrl_read_req),
+        .vgactrl_memory(vgactrl_memory),
+
+        .vga_hsync(vga_hsync),
+        .vga_vsync(vga_vsync),
+        .vga_red(vga_red),
+        .vga_green(vga_green),
+        .vga_blue(vga_blue)
     );
 endmodule
