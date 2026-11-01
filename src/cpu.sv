@@ -26,7 +26,6 @@ module cpu
     wire rf_wreq;
     wire rf_ready;
     wire [4:0] rf_wreg0;
-    wire [4:0] rf_wreg1;
     wire rf_wen0;
     wire rf_wdata0;
     wire [4:0] rf_rreg0;
@@ -101,46 +100,7 @@ module cpu
         .i_ext_rd(32'h00000000)
     );
     /* verilator lint_on PINMISSING */
-
-    /*
-    serv_rf_ram_if #(.width(2), .csr_regs(0)) ram_if(
-        .i_clk(clk),
-        .i_rst(rst),
-
-        .i_wreq(rf_wreq),
-        .i_rreq(rf_rreq),
-        .o_ready(rf_ready),
-        .i_wreg0({1'b0, rf_wreg0[3:0]}),
-        .i_wreg1(5'd0),
-        .i_wen0(rf_wen0),
-        .i_wen1(1'b0),
-        .i_wdata0(rf_wdata0),
-        .i_wdata1(1'b0),
-        .i_rreg0({1'b0, rf_rreg0[3:0]}),
-        .i_rreg1({1'b0, rf_rreg1[3:0]}),
-        .o_rdata0(rf_rdata0),
-        .o_rdata1(rf_rdata1),
-
-        .o_waddr(sram_waddr),
-        .o_wdata(sram_wdata),
-        .o_wen(sram_wen),
-        .o_raddr(sram_raddr),
-        .o_ren(sram_ren),
-        .i_rdata(sram_rdata)
-    );
-
-    serv_rf_ram #(.width(2), .csr_regs(0)) ram(
-        .i_clk(clk),
-
-        .i_waddr(sram_waddr),
-        .i_wdata(sram_wdata),
-        .i_wen(sram_wen),
-        .i_raddr(sram_raddr),
-        .i_ren(sram_ren),
-        .o_rdata(sram_rdata)
-    );
-    */
-    
+   
     register_file rf(
         .clk(clk),
         .rst(rst),

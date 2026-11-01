@@ -2,7 +2,7 @@
 
 module soc
     #(
-        parameter [0:0] ENABLE_UART=0
+        parameter int ENABLE_UART=0
     )
     (
         input wire clk,
@@ -27,7 +27,7 @@ module soc
     // Main wishbone bus
     wire wb_cyc;
     wire wb_stb;
-    wire [26:0] wb_adr;
+    wire [31:0] wb_adr;
     wire wb_we;
     wire [3:0] wb_sel;
     wire [31:0] wb_dat;
@@ -84,9 +84,9 @@ module soc
         .wb_rdt(wb_rdt)
     );
 
-    wb_interconnect #(.ADDR_WIDTH(27)) interconnect(
+    wb_interconnect #(.ADDR_WIDTH(27)) wb_interconnect(
         .wb_in_stb(wb_stb),
-        .wb_in_adr(wb_adr),
+        .wb_in_adr(wb_adr[26:0]),
         .wb_in_ack(wb_ack),
         .wb_in_rty(wb_rty),
         .wb_in_err(wb_err),
@@ -169,6 +169,8 @@ module soc
         .wb_ack(wb_uart_ack),
         .wb_rty(wb_uart_rty),
         .wb_err(wb_uart_err),
-        .wb_rdt(wb_uart_rdt)
+        .wb_rdt(wb_uart_rdt),
+
+        .uart_tx(uart_tx)
     );
 endmodule

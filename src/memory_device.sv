@@ -65,8 +65,6 @@ module memory_device
     wire [7:0] command;
     wire [7:0] read_command;
     wire [7:0] write_command;
-    wire is_flash;
-    wire is_psram;
 
     assign wb_ack = ack && !rst && wb_cyc && wb_stb;
     assign wb_rty = 1'b0;

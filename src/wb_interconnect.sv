@@ -3,8 +3,7 @@
 module wb_interconnect
     #(
         parameter ADDR_WIDTH=32,                    //! Address width
-        parameter DATA_WIDTH=32,                    //! Data width
-        parameter SEL_WIDTH=DATA_WIDTH / 8          //! Selector width
+        parameter DATA_WIDTH=32                     //! Data width
     )
     (
         //! @virtualbus WB_IN @dir input Wishbone input bus
