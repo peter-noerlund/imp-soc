@@ -38,9 +38,10 @@ project:
     - soc.sv
     - uart_device.sv
     - vga_device.sv
-#    - vga_renderer.sv
-#    - vga_timing.sv
-#    - wb_arbiter.sv
+    - vga_memory.sv
+    - vga_renderer.sv
+    - vga_timing.sv
+    - wb_arbiter.sv
     - wb_interconnect.sv
     - write_aligner.sv
 
@@ -51,30 +52,30 @@ pinout:
   ui[1]: ""
   ui[2]: ""
   ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
+  ui[4]: "Game Controller PMOD (LATCH)"
+  ui[5]: "Game Controller PMOD (CLOCK)"
+  ui[6]: "Game Controller PMOD (DATA)"
   ui[7]: ""
 
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
+  uo[0]: "Tiny VGA PMOD (R1)"
+  uo[1]: "Tiny VGA PMOD (G1)"
+  uo[2]: "Tiny VGA PMOD (B1)"
+  uo[3]: "Tiny VGA PMOD (VSYNC)"
+  uo[4]: "Tiny VGA PMOD (R2)"
+  uo[5]: "Tiny VGA PMOD (G2)"
+  uo[6]: "Tiny VGA PMOD (B2)"
+  uo[7]: "Tiny VGA PMOD (HSYNC)"
 
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[0]: "QSPI PMOD (CS)"
+  uio[1]: "QSPI PMOD (MOSI/IO0)"
+  uio[2]: "QSPI PMOD (MISO/IO1)"
+  uio[3]: "QSPI PMOD (SCK)"
+  uio[4]: "QSPI PMOD (IO2)"
+  uio[5]: "QSPI PMOD (IO3)"
+  uio[6]: "QSPI PMOD (CS1)"
+  uio[7]: "TT Audio PMOD (PWM)"
 
 # Do not change!
 yaml_version: 6

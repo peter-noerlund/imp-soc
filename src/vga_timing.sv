@@ -14,7 +14,7 @@ module vga_timing
         parameter int H_FRONT_PORCH = 24,           //! Horizontal front porch in pixels
         parameter int H_SYNC_TIME = 136,            //! Horizontal sync time in pixels
         parameter int H_BACK_PORCH = 160,           //! Horizontal back porch in pixels
-        parameter int H_LEFT_BORDER = 0,           //! Horizontal right border in pixels
+        parameter int H_LEFT_BORDER = 0,            //! Horizontal right border in pixels
 
         parameter int V_BOTTOM_BORDER = 0,          //! Vertical bottom border in lines
         parameter int V_FRONT_PORCH = 3,            //! Vertical front porch in lines
@@ -22,8 +22,8 @@ module vga_timing
         parameter int V_BACK_PORCH = 29,            //! Vertical back porch in lines
         parameter int V_TOP_BORDER = 0,             //! Vertical top border in lines
 
-        parameter [0:0] H_SYNC_POLARITY = 0,          //! Horizontal sync polarity (0=negative, 1=positive)
-        parameter [0:0] V_SYNC_POLARITY = 0,          //! Vertical sync polarity (0=negative, 1=positive)
+        parameter [0:0] H_SYNC_POLARITY = 0,        //! Horizontal sync polarity (0=negative, 1=positive)
+        parameter [0:0] V_SYNC_POLARITY = 0,        //! Vertical sync polarity (0=negative, 1=positive)
         
         parameter int H_POS_WIDTH = $clog2(H_PIXELS + H_RIGHT_BORDER + H_FRONT_PORCH + H_SYNC_TIME + H_BACK_PORCH + H_LEFT_BORDER),
         parameter int V_POS_WIDTH = $clog2(V_PIXELS + V_BOTTOM_BORDER + V_FRONT_PORCH + V_SYNC_TIME + V_BACK_PORCH + V_TOP_BORDER)
