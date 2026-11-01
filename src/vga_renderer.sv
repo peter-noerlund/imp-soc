@@ -159,16 +159,16 @@ module vga_renderer
     vga_timing #(
         .H_PIXELS(512),
         .V_PIXELS(384),
-        .H_RIGHT_BORDER(8),
+        .H_RIGHT_BORDER(8 + 128),
         .H_FRONT_PORCH(8),
         .H_SYNC_TIME(96),
         .H_BACK_PORCH(40),
-        .H_LEFT_BORDER(8 + 128),
-        .V_BOTTOM_BORDER(8),
+        .H_LEFT_BORDER(8),
+        .V_BOTTOM_BORDER(8 + 96),
         .V_FRONT_PORCH(2),
         .V_SYNC_TIME(2),
         .V_BACK_PORCH(25),
-        .V_TOP_BORDER(8 + 96),  // 640x480@60Hz already has 8 pixel border
+        .V_TOP_BORDER(8),
         .H_SYNC_POLARITY(0),
         .V_SYNC_POLARITY(0)
     ) timing (
