@@ -36,11 +36,7 @@ pico_ice/pico_ice_pll.v:
 	icepll -q -i 48 -o 25.175 -p -m -f $@
 
 pico_ice/pico_ice.json: $(VERILOG_SOURCES) pico_ice/pico_ice_top.sv pico_ice/pico_ice_pll.v
-	yosys -q -p "synth_ice40 -device u -top pico_ice_top -json $@; write_verilog pico_ice/pico_ice_synth.v" -DFPGA -DPICO_ICE -l pico_ice/pico_ice.log $^
-
-pico_ice/soc_synth.v: $(VERILOG_SOURCES)
-	yosys -q -p "synth_ice40 -device u -top soc; write_verilog pico_ice/soc_synth.v" -DFPGA -DPICO_ICE -l pico_ice/soc.log $^
-
+	yosys -q -p "synth_ice40 -device u -top pico_ice_top -json $@" -DFPGA -DPICO_ICE -l pico_ice/pico_ice.log $^
 
 pico_ice/pico_ice.asc: pico_ice/pico_ice.pcf pico_ice/pico_ice.json
 	nextpnr-ice40 -q --up5k --package sg48 --freq 25.175 --asc $@ --json pico_ice/pico_ice.json --pcf pico_ice/pico_ice.pcf
