@@ -21,10 +21,13 @@ uart_device:
 vga_device:
 	$(MAKE) -C vga_device
 
+vga_memory:
+	$(MAKE) -C vga_memory
+
 vga_timing:
 	$(MAKE) -C vga_timing
 
 write_aligner:
 	$(MAKE) -C write_aligner
 
-.PHONY: clock_device register_file uart_device mul_device write_aligner memory_device cpu soc vga_device vga_timing
+.PHONY: clock_device register_file uart_device mul_device write_aligner memory_device cpu soc vga_device vga_memory vga_timing

@@ -1,9 +1,9 @@
 VERILOG_SOURCES=\
 	src/clock_device.sv \
 	src/cpu.sv \
-    src/dummy_device.sv \
-    src/memory_device.sv \
-    src/register_file.sv \
+	src/dummy_device.sv \
+	src/memory_device.sv \
+	src/register_file.sv \
 	src/serv/rtl/serv_alu.v \
 	src/serv/rtl/serv_bufreg.v \
 	src/serv/rtl/serv_bufreg2.v \
@@ -16,15 +16,16 @@ VERILOG_SOURCES=\
 	src/serv/rtl/serv_state.v \
 	src/serv/rtl/serv_top.v \
 	src/serv/servile/servile_arbiter.v \
-    src/soc.sv \
-    src/tt_um_pchri03_imp_soc.v \
-    src/uart_device.sv \
-    src/vga_device.sv \
-    src/vga_renderer.sv \
-    src/vga_timing.sv \
-    src/wb_arbiter.sv \
-    src/wb_interconnect.sv \
-    src/write_aligner.sv
+	src/soc.sv \
+	src/tt_um_pchri03_imp_soc.v \
+	src/uart_device.sv \
+	src/vga_device.sv \
+	src/vga_memory.sv \
+	src/vga_renderer.sv \
+	src/vga_timing.sv \
+	src/wb_arbiter.sv \
+	src/wb_interconnect.sv \
+	src/write_aligner.sv
 
 all: lint
 
