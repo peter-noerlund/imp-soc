@@ -172,7 +172,7 @@ module vga_renderer
         .H_LEFT_BORDER(8 + 64),     // 640x480@60Hz already has 8 pixel border
         .V_BOTTOM_BORDER(8 + 48),   // 640x480@60Hz already has 8 pixel border
         .V_FRONT_PORCH(2),
-        .V_SYNC_TIME(25),
+        .V_SYNC_TIME(2),
         .V_BACK_PORCH(25),
         .V_TOP_BORDER(8 + 48),      // 640x480@60Hz already has 8 pixel border
         .H_SYNC_POLARITY(0),
