@@ -42,6 +42,11 @@ module memory_device
         output wire spi_psram_ss_n
     );
 
+    localparam [2:0] CTI_INCREMENT = 3'b010;
+    localparam [2:0] CTI_END_OF_BURST = 3'b111;
+
+    localparam [1:0] BTE_LINEAR = 2'b00;
+
     // Wishbone signals
     bit [31:0] rdt;
     bit ack;
@@ -264,7 +269,9 @@ module memory_device
                     rdt[27:24] <= spi_sio_in;
                     // Stop
                     ack <= 1'b1;
-                    ss_n <= 1'b1;
+                    if (wb_cti != CTI_INCREMENT || wb_bte != BTE_LINEAR) begin
+                        ss_n <= 1'b1;
+                    end
                 end
 
                 default: begin
@@ -273,7 +280,11 @@ module memory_device
             endcase
 
             if (!sck) begin
-                state <= state + 5'd1;
+                if (state == 5'd29 && wb_cti == CTI_INCREMENT && wb_bte == BTE_LINEAR) begin
+                    state <= 5'd22;
+                end else begin
+                    state <= state + 5'd1;
+                end
             end
 
             if (ack) begin
