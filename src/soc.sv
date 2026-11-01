@@ -240,7 +240,7 @@ module soc
         .vgaconfig_addr(vgaconfig_addr)
     );
 
-    vga_memory #(.ADDR_WIDTH(25), .WORD_COUNT(16), .WORD_SIZE(24)) vga_memory(
+    vga_memory #(.ADDR_WIDTH(25), .WORD_COUNT(16), .WORD_SIZE(24), .LINE_COUNT(96)) vga_memory(
         .clk(clk),
         .rst(rst),
 
