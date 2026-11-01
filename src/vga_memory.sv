@@ -124,7 +124,9 @@ module vga_memory
     // Buffer
     always_ff @ (posedge clk) begin
         if (!rst && ack) begin
-            buffer <= wb_rdt[WORD_SIZE - 1 : 0];
+            // Byte layout is 00rrggbb 00RRGGBB 00aaabbb 00cccddd which translates to 00cccddd_00aaabbb_00RRGGBB_00rrggb
+            // VGA renderer expects rrggbb_RRGGBB_ddd_ccc_bbb_aaa
+            buffer <= {wb_rdt[5:0], wb_rdt[13:8], wb_rdt[26:24], wb_rdt[29:27], wb_rdt[18:16], wb_rdt[21:19]};
         end
     end
 
