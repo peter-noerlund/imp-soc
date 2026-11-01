@@ -17,6 +17,7 @@ module vga_memory
     #(
         parameter int ADDR_WIDTH=32,
         parameter int WORD_COUNT=15,
+        parameter int WORD_SIZE=32,
         parameter int LINE_COUNT=100
     )
     (
@@ -26,7 +27,7 @@ module vga_memory
         input wire [ADDR_WIDTH - 1 : 0] vgaconfig_addr, //! Base address
 
         input wire vgactrl_read_req,                            //! Read line request
-        output wire [WORD_COUNT * 32 - 1 : 0] vgactrl_memory,   //! Memory
+        output wire [WORD_COUNT * WORD_SIZE - 1 : 0] vgactrl_memory,   //! Memory
 
         //! @virtualbus WB @dir output Wishbone bus
         output wire wb_cyc,                             //! Wishbone signal CYC_O
@@ -55,7 +56,7 @@ module vga_memory
     bit [WORD_WIDTH - 1 : 0] word_idx;
     bit [LINE_WIDTH - 1 : 0] line_idx;
 
-    bit [31:0] buffer;
+    bit [WORD_SIZE - 1 : 0] buffer;
     bit latch0;
     bit latch1;
     
@@ -63,7 +64,7 @@ module vga_memory
     wire ack;
     wire last_word;
 
-    wire [WORD_COUNT * 32 - 1 : 0] memory;
+    wire [WORD_COUNT * WORD_SIZE - 1 : 0] memory;
 
     genvar i;
 
@@ -78,7 +79,7 @@ module vga_memory
     assign ack = cyc & (wb_ack | wb_rty | wb_err);
     assign last_word = word_idx == WORD_WIDTH'(WORD_COUNT - 1);
 
-    assign vgactrl_memory = {memory[31:0], memory[WORD_COUNT * 32 - 1 : 32]};
+    assign vgactrl_memory = {memory[WORD_SIZE - 1 : 0], memory[WORD_COUNT * WORD_SIZE - 1 : WORD_SIZE]};
 
     // Word index
     always_ff @ (posedge clk) begin
@@ -123,7 +124,7 @@ module vga_memory
     // Buffer
     always_ff @ (posedge clk) begin
         if (!rst && ack) begin
-            buffer <= wb_rdt;
+            buffer <= wb_rdt[WORD_SIZE - 1 : 0];
         end
     end
 
@@ -140,7 +141,7 @@ module vga_memory
     // Memory
     generate
         for (i = 0; i != WORD_COUNT; i++) begin: mem_n
-            vga_latch mem(.clk(clk), .gate(latch1 && word_idx == WORD_WIDTH'(i)), .data_in(buffer), .data_out(memory[i * 32 + 31 -: 32]));
+            vga_latch #(.WIDTH(WORD_SIZE)) mem(.clk(clk), .gate(latch1 && word_idx == WORD_WIDTH'(i)), .data_in(buffer), .data_out(memory[i * WORD_SIZE + WORD_SIZE - 1 -: WORD_SIZE]));
         end
     endgenerate
 
