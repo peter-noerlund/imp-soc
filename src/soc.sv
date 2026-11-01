@@ -196,7 +196,7 @@ module soc
 
         .wb_cyc(wb_cyc),
         .wb_stb(wb_vga_stb),
-        .wb_adr(wb_adr[24:0]),
+        .wb_adr(wb_adr[25:0]),
         .wb_we(wb_we),
         .wb_sel(wb_sel),
         .wb_dat(wb_dat),
