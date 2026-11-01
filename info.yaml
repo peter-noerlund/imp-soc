@@ -20,6 +20,8 @@ project:
     - tt_um_pchri03_imp_soc.v
     - clock_device.sv
     - cpu.sv
+    - dummy_device.sv
+    - led_device.sv
     - memory_device.sv
     - register_file.sv
     - serv/rtl/serv_aligner.v
