@@ -51,9 +51,11 @@ module vga_renderer
     // PIXELS_21 is not allowed
     localparam [2:0] PIXELS_22 = 3'b111;
 
-    wire [HPOS_WIDTH - 1 : 0] vga_hpos;
-    wire [VPOS_WIDTH - 1 : 0] vga_vpos;
-    wire vga_blank;
+    wire [HPOS_WIDTH - 1 : 0] h_pos;
+    wire [VPOS_WIDTH - 1 : 0] v_pos;
+    wire blank;
+    wire h_sync;
+    wire v_sync;
 
     bit active;
 
@@ -61,8 +63,10 @@ module vga_renderer
     wire [2:0] group;
     wire [5:0] color1;
     wire [5:0] color2;
-    bit [5:0] pixel0;
-    bit [5:0] pixel1;
+    bit [11:0] pixels;
+    wire [5:0] black;
+    wire [5:0] pixel0;
+    wire [5:0] pixel1;
     wire [5:0] pixel;
     wire [1:0] red;
     wire [1:0] green;
@@ -75,11 +79,7 @@ module vga_renderer
 
     int i;
     
-    assign vga_red = vga_blank ? 2'b00 : red;
-    assign vga_green = vga_blank ? 2'b00 : green;
-    assign vga_blue = vga_blank ? 2'b00 : blue;
-
-    // vga_hpos implicitly stores at lot of state.
+    // h_pos implicitly stores at lot of state.
     // 
     // For 1024x768, it looks like this (C=chunk, G=group, P=pixel, S=subpixel):
     //
@@ -96,45 +96,40 @@ module vga_renderer
     // | |   C   | G |P| S |
     // +-+-+-+-+-+-+-+-+-+-+
 
-    assign subpixel_idx = vga_hpos[SUBPIXEL_IDX_WIDTH - 1 : 0];
-    assign pixel_idx = vga_hpos[SUBPIXEL_IDX_WIDTH];
-    assign group_idx = vga_hpos[GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : SUBPIXEL_IDX_WIDTH];
-    assign chunk_idx = vga_hpos[CHUNK_IDX_WIDTH + GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH];
+    assign subpixel_idx = h_pos[SUBPIXEL_IDX_WIDTH - 1 : 0];
+    assign pixel_idx = h_pos[SUBPIXEL_IDX_WIDTH];
+    assign group_idx = h_pos[GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : SUBPIXEL_IDX_WIDTH];
+    assign chunk_idx = h_pos[CHUNK_IDX_WIDTH + GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH];
 
     assign group = chunk[group_idx * 3 + 2 -: 3];
     assign color1 = chunk[23:18];
     assign color2 = chunk[17:12];
 
+    assign pixel0 = pixels[5:0];
+    assign pixel1 = pixels[5:0];
+    assign black = 6'b000000;
     assign pixel = pixel_idx ? pixel1 : pixel0;
     assign red = pixel[5:4];
     assign green = pixel[3:2];
     assign blue = pixel[1:0];
 
-    assign vgactrl_read_req = vga_hpos == HPOS_WIDTH'(HPIXELS - 1) && subpixel_idx == SUBPIXEL_IDX_WIDTH'(SUBPIXEL_WIDTH - 1) && active && vgaconfig_enabled;
+    assign vga_red = blank ? 2'b00 : red;
+    assign vga_green = blank ? 2'b00 : green;
+    assign vga_blue = blank ? 2'b00 : blue;
+    assign vga_hsync = h_sync;
+    assign vga_vsync = v_sync;
+    assign vgactrl_read_req = h_pos == HPOS_WIDTH'(HPIXELS - 1) && subpixel_idx == SUBPIXEL_IDX_WIDTH'(SUBPIXEL_WIDTH - 1) && active && vgaconfig_enabled;
 
     always_comb begin
         case (group)
-            PIXELS_BB: pixel0 = 6'b000000;
-            PIXELS_B1: pixel0 = color1;
-            PIXELS_B2: pixel0 = color2;
-            PIXELS_1B: pixel0 = 6'b000000;
-            PIXELS_11: pixel0 = color1;
-            PIXELS_12: pixel0 = color2;
-            PIXELS_2B: pixel0 = 6'b000000;
-            PIXELS_22: pixel0 = color2;
-        endcase
-    end
-
-    always_comb begin
-        case (group)
-            PIXELS_BB: pixel1 = 6'b000000;
-            PIXELS_B1: pixel1 = 6'b000000;
-            PIXELS_B2: pixel1 = 6'b000000;
-            PIXELS_1B: pixel1 = color1;
-            PIXELS_11: pixel1 = color1;
-            PIXELS_12: pixel1 = color1;
-            PIXELS_2B: pixel1 = color2;
-            PIXELS_22: pixel1 = color2;
+            PIXELS_BB: pixels = {black, black};
+            PIXELS_B1: pixels = {black, color1};
+            PIXELS_B2: pixels = {black, color2};
+            PIXELS_1B: pixels = {color1, black};
+            PIXELS_11: pixels = {color1, color1};
+            PIXELS_12: pixels = {color1, color2};
+            PIXELS_2B: pixels = {color2, black};
+            PIXELS_22: pixels = {color2, color2};
         endcase
     end
 
@@ -151,9 +146,9 @@ module vga_renderer
         if (rst) begin
             active <= 1'b1;
         end else begin
-            if (vga_vpos == VPOS_WIDTH'(VPIXELS + 1)) begin
+            if (v_pos == VPOS_WIDTH'(VPIXELS + 1)) begin
                 active <= 1'b0; // TODO - Do not fetch after last line
-            end else if (vga_vpos == VPOS_WIDTH'(0)) begin
+            end else if (v_pos == VPOS_WIDTH'(0)) begin
                 active <= 1'b1; // TODO - Wait until line -1
             end
         end
@@ -164,37 +159,37 @@ module vga_renderer
     vga_timing #(
         .H_PIXELS(512),
         .V_PIXELS(384),
-        .H_RIGHT_BORDER(8 + 64),    // 640x480@60Hz already has 8 pixel border
+        .H_RIGHT_BORDER(8),
         .H_FRONT_PORCH(8),
         .H_SYNC_TIME(96),
         .H_BACK_PORCH(40),
-        .H_LEFT_BORDER(8 + 64),     // 640x480@60Hz already has 8 pixel border
-        .V_BOTTOM_BORDER(8 + 48),   // 640x480@60Hz already has 8 pixel border
+        .H_LEFT_BORDER(8 + 128),
+        .V_BOTTOM_BORDER(8),
         .V_FRONT_PORCH(2),
         .V_SYNC_TIME(2),
         .V_BACK_PORCH(25),
-        .V_TOP_BORDER(8 + 48),      // 640x480@60Hz already has 8 pixel border
+        .V_TOP_BORDER(8 + 96),  // 640x480@60Hz already has 8 pixel border
         .H_SYNC_POLARITY(0),
         .V_SYNC_POLARITY(0)
     ) timing (
         .clk(clk),
         .rst(rst),
-        .vga_hpos(vga_hpos),
-        .vga_vpos(vga_vpos),
-        .vga_hsync(vga_hsync),
-        .vga_vsync(vga_vsync),
-        .vga_blank(vga_blank)
+        .vga_hpos(h_pos),
+        .vga_vpos(v_pos),
+        .vga_hsync(h_sync),
+        .vga_vsync(v_sync),
+        .vga_blank(blank)
     );
 `else // PICO_ICE
     // ASIC runs at 65 MHz and outputs VESA 1024x768 at 60Hz
     vga_timing timing(
         .clk(clk),
         .rst(rst),
-        .vga_hpos(vga_hpos),
-        .vga_vpos(vga_vpos),
-        .vga_hsync(vga_hsync),
-        .vga_vsync(vga_vsync),
-        .vga_blank(vga_blank)
+        .vga_hpos(h_pos),
+        .vga_vpos(v_pos),
+        .vga_hsync(h_sync),
+        .vga_vsync(v_sync),
+        .vga_blank(blank)
     );
 `endif // PICO_ICE
 endmodule
