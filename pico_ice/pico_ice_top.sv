@@ -16,7 +16,7 @@ module pico_ice_top
     );
 
     localparam [0:0] ENABLE_CLOCK_DEVICE = 0;
-    localparam [0:0] ENABLE_LED_DEVICE = 0;
+    localparam [0:0] ENABLE_LED_DEVICE = 1;
     localparam [0:0] ENABLE_VGA_DEVICE = 0;
     
     // ICE_PMOD0 is used for VGA PMOD
