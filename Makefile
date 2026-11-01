@@ -37,6 +37,13 @@ harden:
 	./tt/tt_tool.py --create-user-config
 	./tt/tt_tool.py --harden
 
+summary.md:
+	./tt/tt_tool.py --print-warnings > $(CURDIR)/summary.md
+	./tt/tt_tool.py --print-stats >> $(CURDIR)/summary.md
+	./tt/tt_tool.py --print-cell-summary >> $(CURDIR)/summary.md
+	./tt/tt_tool.py --print-cell-category >> $(CURDIR)/summary.md
+	
+
 lint:
 	verilator --lint-only $(VERILOG_SOURCES)
 
