@@ -5,15 +5,15 @@ SIM = icarus
 TOPLEVEL_LANG = verilog
 
 # List of Verilog source files.
-VERILOG_SOURCES = $(CURDIR)/../../src/video_device.sv
+VERILOG_SOURCES = $(CURDIR)/../../src/vga_device.sv
 
 # The name of the toplevel module/entity in your design.
-TOPLEVEL = video_device
+TOPLEVEL = vga_device
 
 # The Python modules which contain your testcases.
 # The current directory is included in the Python path,
 # so you can just specify the module name without the .py extension.
-COCOTB_TEST_MODULES = video_device_tests
+COCOTB_TEST_MODULES = vga_device_tests
 
 # Enable waveform generation.
 WAVES = 1
