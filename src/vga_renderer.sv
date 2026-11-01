@@ -153,8 +153,7 @@ module vga_renderer
         end else begin
             if (vga_vpos == VPOS_WIDTH'(VPIXELS + 1)) begin
                 active <= 1'b0; // TODO - Do not fetch after last line
-            end
-            if (vga_vpos == VPOS_WIDTH'(0)) begin
+            end else if (vga_vpos == VPOS_WIDTH'(0)) begin
                 active <= 1'b1; // TODO - Wait until line -1
             end
         end

@@ -114,8 +114,7 @@ module vga_memory
         end else begin
             if (!cyc && vgactrl_read_req) begin
                 cyc <= 1'b1;
-            end
-            if (ack && last_word) begin
+            end else if (ack && last_word) begin
                 cyc <= 1'b0;
             end
         end

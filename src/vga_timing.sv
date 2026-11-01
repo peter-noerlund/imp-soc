@@ -97,8 +97,7 @@ module vga_timing
         end else begin
             if (h_pos == H_POS_WIDTH'(H_POS_SYNC_START)) begin
                 h_sync <= H_SYNC_POLARITY;
-            end
-            if (h_pos == H_POS_WIDTH'(H_POS_SYNC_END)) begin
+            end else if (h_pos == H_POS_WIDTH'(H_POS_SYNC_END)) begin
                 h_sync <= !H_SYNC_POLARITY;
             end
         end
@@ -111,8 +110,7 @@ module vga_timing
         end else if (h_pos == H_POS_WIDTH'(H_POS_SYNC_START)) begin
             if (v_pos == V_POS_WIDTH'(V_POS_SYNC_START)) begin
                 v_sync <= V_SYNC_POLARITY;
-            end
-            if (v_pos == V_POS_WIDTH'(V_POS_SYNC_END)) begin
+            end else if (v_pos == V_POS_WIDTH'(V_POS_SYNC_END)) begin
                 v_sync <= !V_SYNC_POLARITY;
             end
         end
@@ -125,8 +123,7 @@ module vga_timing
         end else begin
             if (h_pos == H_POS_WIDTH'(H_POS_BLANK_START)) begin
                 h_blank <= 1'b1;
-            end
-            if (h_pos == H_POS_WIDTH'(H_POS_BLANK_END)) begin
+            end else if (h_pos == H_POS_WIDTH'(H_POS_BLANK_END)) begin
                 h_blank <= 1'b0;
             end
         end
@@ -139,8 +136,7 @@ module vga_timing
         end else if (h_pos == H_POS_WIDTH'(H_POS_SYNC_START)) begin
             if (v_pos == V_POS_WIDTH'(V_POS_BLANK_START)) begin
                 v_blank <= 1'b1;
-            end
-            if (v_pos == V_POS_WIDTH'(V_POS_BLANK_END)) begin
+            end else if (v_pos == V_POS_WIDTH'(V_POS_BLANK_END)) begin
                 v_blank <= 1'b0;
             end
         end
