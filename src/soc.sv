@@ -88,7 +88,7 @@ module soc
     wire [24:0] vgaconfig_addr;
 
     wire vgactrl_read_req;
-    wire [10 * 24 - 1 : 0] vgactrl_memory;
+    wire [479:0] vgactrl_memory;
 
     cpu cpu(
         .clk(clk),

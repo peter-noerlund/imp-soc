@@ -16,7 +16,7 @@ After `LINE_COUNT` lines, it resets
 module vga_memory
     #(
         parameter int ADDR_WIDTH=32,
-        parameter int WORD_COUNT=10,
+        parameter int WORD_COUNT=15,
         parameter int LINE_COUNT=100
     )
     (
@@ -26,7 +26,7 @@ module vga_memory
         input wire [ADDR_WIDTH - 1 : 0] vgaconfig_addr, //! Base address
 
         input wire vgactrl_read_req,                            //! Read line request
-        output wire [WORD_COUNT * 24 - 1 : 0] vgactrl_memory,   //! Memory
+        output wire [WORD_COUNT * 32 - 1 : 0] vgactrl_memory,   //! Memory
 
         //! @virtualbus WB @dir output Wishbone bus
         output wire wb_cyc,                             //! Wishbone signal CYC_O
@@ -55,7 +55,7 @@ module vga_memory
     bit [WORD_WIDTH - 1 : 0] word_idx;
     bit [LINE_WIDTH - 1 : 0] line_idx;
 
-    bit [23:0] buffer;
+    bit [31:0] buffer;
     bit latch0;
     bit latch1;
     
@@ -63,7 +63,7 @@ module vga_memory
     wire ack;
     wire last_word;
 
-    wire [WORD_COUNT * 24 - 1 : 0] memory;
+    wire [WORD_COUNT * 32 - 1 : 0] memory;
 
     genvar i;
 
@@ -78,7 +78,7 @@ module vga_memory
     assign ack = cyc & (wb_ack | wb_rty | wb_err);
     assign last_word = word_idx == WORD_WIDTH'(WORD_COUNT - 1);
 
-    assign vgactrl_memory = {memory[23:0], memory[WORD_COUNT * 24 - 1 : 24]};
+    assign vgactrl_memory = {memory[31:0], memory[WORD_COUNT * 32 - 1 : 32]};
 
     // Word index
     always_ff @ (posedge clk) begin
@@ -123,7 +123,7 @@ module vga_memory
     // Buffer
     always_ff @ (posedge clk) begin
         if (!rst && ack) begin
-            buffer <= wb_rdt[23:0];
+            buffer <= wb_rdt;
         end
     end
 
@@ -140,7 +140,7 @@ module vga_memory
     // Memory
     generate
         for (i = 0; i != WORD_COUNT; i++) begin: mem_n
-            vga_latch #(.WIDTH(24)) mem(.clk(clk), .gate(latch1 && word_idx == WORD_WIDTH'(i)), .data_in(buffer), .data_out(memory[i * 24 + 23 -: 24]));
+            vga_latch mem(.clk(clk), .gate(latch1 && word_idx == WORD_WIDTH'(i)), .data_in(buffer), .data_out(memory[i * 32 + 31 -: 32]));
         end
     endgenerate
 

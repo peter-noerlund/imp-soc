@@ -2,7 +2,7 @@
 
 module vga_renderer
     #(
-        parameter int CHUNK_COUNT=10
+        parameter int CHUNK_COUNT=20
     )
     (
         input wire clk,
