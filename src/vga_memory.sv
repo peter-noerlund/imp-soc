@@ -16,7 +16,7 @@ After `LINE_COUNT` lines, it resets
 module vga_memory
     #(
         parameter int ADDR_WIDTH=32,
-        parameter int WORD_COUNT=15,
+        parameter int WORD_COUNT=10,
         parameter int LINE_COUNT=100
     )
     (
@@ -26,7 +26,7 @@ module vga_memory
         input wire [ADDR_WIDTH - 1 : 0] vgaconfig_addr, //! Base address
 
         input wire vgactrl_read_req,                            //! Read line request
-        output wire [WORD_COUNT * 32 - 1 : 0] vgactrl_memory,   //! Memory
+        output wire [WORD_COUNT * 24 - 1 : 0] vgactrl_memory,   //! Memory
 
         //! @virtualbus WB @dir output Wishbone bus
         output wire wb_cyc,                             //! Wishbone signal CYC_O
@@ -57,7 +57,7 @@ module vga_memory
     bit [WORD_WIDTH - 1 : 0] word_idx;
     bit [LINE_WIDTH - 1 : 0] line_idx;
 
-    bit [31:0] buffer;
+    bit [23:0] buffer;
     bit latch0;
     bit latch1;
     
@@ -123,7 +123,7 @@ module vga_memory
     // Buffer
     always_ff @ (posedge clk) begin
         if (!rst && ack) begin
-            buffer <= wb_rdt;
+            buffer <= wb_rdt[23:0];
         end
     end
 
@@ -133,7 +133,7 @@ module vga_memory
     end
 
     // Latch1
-    always_ff @ (posedge clk) begin
+    always_ff @ (negedge clk) begin
         latch1 <= latch0;
     end
 
@@ -161,14 +161,14 @@ module vga_memory
             always_latch begin
                 // At this point, word_idx has been incremented, so we need to store the buffer in the previous chunk
                 if (latch1 && word_idx == WORD_WIDTH'(i)) begin
-                    mem[i * 32 - 1 -: 32] = buffer;
+                    mem[i * 24 - 1 -: 24] = buffer;
                 end
             end
         end
         
         always_latch begin
             if (latch1 && word_idx == WORD_WIDTH'(0)) begin
-                mem[WORD_COUNT * 32 - 1 -: 32] = buffer;
+                mem[WORD_COUNT * 24 - 1 -: 24] = buffer;
             end
         end
     endgenerate

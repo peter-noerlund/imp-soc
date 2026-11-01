@@ -17,7 +17,9 @@ module tt_um_pchri03_imp_soc
     assign uio_oe[3] = 1'b1;        // SCK
     assign uio_oe[7:6] = 2'b11;     // CS2 + CS3
 
-    soc #(.ENABLE_UART(0)) soc(
+    assign uio_out[7] = 1'b1;
+
+    soc soc(
         .clk(clk),
         .rst(!rst_n),
 
@@ -27,8 +29,6 @@ module tt_um_pchri03_imp_soc
         .spi_sio_oe({uio_oe[5:4], uio_oe[2:1]}),
         .spi_flash_ss_n(uio_out[0]),
         .spi_psram_ss_n(uio_out[6]),
-        
-        .uart_tx(uio_out[7]),
 
         .vga_red({uo_out[0], uo_out[4]}),
         .vga_green({uo_out[1], uo_out[5]}),

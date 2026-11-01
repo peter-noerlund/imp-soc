@@ -2,6 +2,7 @@
 .vscode
 __pycache__
 build
+gds_render*
 pico_ice/pico_ice.asc
 pico_ice/pico_ice.log
 pico_ice/pico_ice_pll.v

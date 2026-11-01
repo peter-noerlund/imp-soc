@@ -2,7 +2,7 @@
 
 module vga_renderer
     #(
-        parameter int WORD_COUNT=15
+        parameter int CHUNK_COUNT=10
     )
     (
         input wire clk,
@@ -11,7 +11,7 @@ module vga_renderer
         input wire vgaconfig_enabled,
 
         output wire vgactrl_read_req,
-        input wire [WORD_COUNT * 32 - 1 : 0] vgactrl_memory,
+        input wire [CHUNK_COUNT * 24 - 1 : 0] vgactrl_memory,
 
         //! @virtualbus VGA @dir output VGA
         output wire vga_hsync,                      //! VGA horizontal sync
@@ -22,7 +22,6 @@ module vga_renderer
         //! @end
     );
 
-    localparam int CHUNK_COUNT = WORD_COUNT * 32 / 24;
     localparam int CHUNK_IDX_WIDTH = $clog2(CHUNK_COUNT);
 
     localparam [2:0] PIXELS_BB = 3'b000;

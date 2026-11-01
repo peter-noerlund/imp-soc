@@ -1,14 +1,9 @@
 `default_nettype none
 
 module soc
-    #(
-        parameter [0:0] ENABLE_UART=0
-    )
     (
         input wire clk,
         input wire rst,
-
-        output wire uart_tx,
 
         output wire spi_sck,
         output wire [3:0] spi_sio_out,
@@ -54,13 +49,6 @@ module soc
     wire wb_cpu_clock_rty;
     wire [31:0] wb_cpu_clock_rdt;
 
-    // UART
-    wire wb_cpu_uart_stb;
-    wire wb_cpu_uart_ack;
-    wire wb_cpu_uart_err;
-    wire wb_cpu_uart_rty;
-    wire [31:0] wb_cpu_uart_rdt;
-
     // VGA
     wire wb_cpu_vga_stb;
     wire wb_cpu_vga_ack;
@@ -100,7 +88,7 @@ module soc
     wire [24:0] vgaconfig_addr;
 
     wire vgactrl_read_req;
-    wire [15 * 32 - 1 : 0] vgactrl_memory;
+    wire [10 * 24 - 1 : 0] vgactrl_memory;
 
     cpu cpu(
         .clk(clk),
@@ -139,12 +127,6 @@ module soc
         .wb_clock_rty(wb_cpu_clock_rty),
         .wb_clock_err(wb_cpu_clock_err),
         .wb_clock_rdt(wb_cpu_clock_rdt),
-
-        .wb_uart_stb(wb_cpu_uart_stb),
-        .wb_uart_ack(wb_cpu_uart_ack),
-        .wb_uart_rty(wb_cpu_uart_rty),
-        .wb_uart_err(wb_cpu_uart_err),
-        .wb_uart_rdt(wb_cpu_uart_rdt),
 
         .wb_vga_stb(wb_cpu_vga_stb),
         .wb_vga_ack(wb_cpu_vga_ack),
@@ -219,13 +201,13 @@ module soc
         .spi_psram_ss_n(spi_psram_ss_n)
     );
 
-    clock_device #(.ADDR_WIDTH(2)) clock_device(
+    clock_device #(.ADDR_WIDTH(3)) clock_device(
         .clk(clk),
         .rst(rst),
 
         .wb_cyc(wb_cpu_cyc),
         .wb_stb(wb_cpu_clock_stb),
-        .wb_adr(wb_cpu_adr[1:0]),
+        .wb_adr(wb_cpu_adr[2:0]),
         .wb_we(wb_cpu_we),
         .wb_sel(wb_cpu_sel),
         .wb_dat(wb_cpu_dat),
@@ -236,52 +218,6 @@ module soc
         .wb_err(wb_cpu_clock_err),
         .wb_rdt(wb_cpu_clock_rdt)
     );
-
-    /* verilator lint_off GENUNNAMED */
-    generate
-        if (ENABLE_UART) begin
-            uart_device #(.ADDR_WIDTH(2)) uart_device(
-                .clk(clk),
-                .rst(rst),
-
-                .wb_cyc(wb_cpu_cyc),
-                .wb_stb(wb_cpu_uart_stb),
-                .wb_adr(wb_cpu_adr[1:0]),
-                .wb_we(wb_cpu_we),
-                .wb_sel(wb_cpu_sel),
-                .wb_dat(wb_cpu_dat),
-                .wb_cti(wb_cpu_cti),
-                .wb_bte(wb_cpu_bte),
-                .wb_ack(wb_cpu_uart_ack),
-                .wb_rty(wb_cpu_uart_rty),
-                .wb_err(wb_cpu_uart_err),
-                .wb_rdt(wb_cpu_uart_rdt),
-
-                .uart_tx(uart_tx)
-            );
-        end else begin
-            dummy_device #(.ADDR_WIDTH(2)) dummy_device(
-                .clk(clk),
-                .rst(rst),
-
-                .wb_cyc(wb_cpu_cyc),
-                .wb_stb(wb_cpu_uart_stb),
-                .wb_adr(wb_cpu_adr[1:0]),
-                .wb_we(wb_cpu_we),
-                .wb_sel(wb_cpu_sel),
-                .wb_dat(wb_cpu_dat),
-                .wb_cti(wb_cpu_cti),
-                .wb_bte(wb_cpu_bte),
-                .wb_ack(wb_cpu_uart_ack),
-                .wb_rty(wb_cpu_uart_rty),
-                .wb_err(wb_cpu_uart_err),
-                .wb_rdt(wb_cpu_uart_rdt)
-            );
-
-            assign uart_tx = 1'b1;
-        end
-    endgenerate
-    /* verilator lint_on GENUNNAMED */
 
     vga_device #(.ADDR_WIDTH(25)) vga_device(
         .clk(clk),
