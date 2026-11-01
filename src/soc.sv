@@ -88,7 +88,7 @@ module soc
     wire [24:0] vgaconfig_addr;
 
     wire vgactrl_read_req;
-    wire [479:0] vgactrl_memory;
+    wire [383:0] vgactrl_memory;
 
     cpu cpu(
         .clk(clk),
@@ -240,7 +240,7 @@ module soc
         .vgaconfig_addr(vgaconfig_addr)
     );
 
-    vga_memory #(.ADDR_WIDTH(25)) vga_memory(
+    vga_memory #(.ADDR_WIDTH(25), .WORD_COUNT(16), .WORD_SIZE(24)) vga_memory(
         .clk(clk),
         .rst(rst),
 
@@ -262,7 +262,7 @@ module soc
         .wb_rdt(wb_vga_rdt)
     );
 
-    vga_renderer vga_renderer(
+    vga_renderer #(.CHUNK_COUNT(16)) vga_renderer(
         .clk(clk),
         .rst(rst),
 
