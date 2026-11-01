@@ -16,7 +16,6 @@ async def test_soc_vga(dut):
         utils.addi(utils.X6, utils.X5, 0),              # X6 = X5
         utils.lui(utils.X7, 0x44440),                   # X7 = 0x44440000
         utils.addi(utils.X7, utils.X7, 0x030),          # X7 += 0x030 ; X7 = 0x44440030
-#        utils.addi(utils.X7, utils.ZERO, 0xFFF),
         utils.lui(utils.X8, 0x00002),                   # X8 = 0x00001000
         utils.addi(utils.X8, utils.X8, -2048),          # X8 += 0x800
         utils.add(utils.X8, utils.X8, utils.X5),        # X8 += X5
