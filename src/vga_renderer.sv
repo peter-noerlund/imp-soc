@@ -22,7 +22,8 @@ module vga_renderer
         //! @end
     );
 
-    localparam int CHUNK_IDX_WIDTH = $clog2(WORD_COUNT * 32 / 24);
+    localparam int CHUNK_COUNT = WORD_COUNT * 32 / 24;
+    localparam int CHUNK_IDX_WIDTH = $clog2(CHUNK_COUNT);
 
     localparam [2:0] PIXELS_BB = 3'b000;
     localparam [2:0] PIXELS_B1 = 3'b001;
@@ -73,7 +74,7 @@ module vga_renderer
 
     assign color1 = chunk[23:18];
     assign color2 = chunk[17:12];
-    assign pixel_group = chunk[pixel_group_idx * 3 + 2 -: 3];
+    assign pixel_group = chunk[(3 - pixel_group_idx) * 3 + 2 -: 3];
 
     assign pixel = pixel_group_subpixel_idx ? pixel1 : pixel0;
     assign red = pixel[5:4];
@@ -85,12 +86,12 @@ module vga_renderer
     always_comb begin
         case (pixel_group)
             PIXELS_BB: pixel0 = 6'b000000;
-            PIXELS_B1: pixel0 = 6'b000000;
-            PIXELS_B2: pixel0 = 6'b000000;
-            PIXELS_1B: pixel0 = color1;
+            PIXELS_B1: pixel0 = color1;
+            PIXELS_B2: pixel0 = color2;
+            PIXELS_1B: pixel0 = 6'b000000;
             PIXELS_11: pixel0 = color1;
-            PIXELS_12: pixel0 = color1;
-            PIXELS_2B: pixel0 = color2;
+            PIXELS_12: pixel0 = color2;
+            PIXELS_2B: pixel0 = 6'b000000;
             PIXELS_22: pixel0 = color2;
         endcase
     end
@@ -98,21 +99,21 @@ module vga_renderer
     always_comb begin
         case (pixel_group)
             PIXELS_BB: pixel1 = 6'b000000;
-            PIXELS_B1: pixel1 = color1;
-            PIXELS_B2: pixel1 = color2;
-            PIXELS_1B: pixel1 = 6'b000000;
+            PIXELS_B1: pixel1 = 6'b000000;
+            PIXELS_B2: pixel1 = 6'b000000;
+            PIXELS_1B: pixel1 = color1;
             PIXELS_11: pixel1 = color1;
-            PIXELS_12: pixel1 = color2;
-            PIXELS_2B: pixel1 = 6'b000000;
+            PIXELS_12: pixel1 = color1;
+            PIXELS_2B: pixel1 = color2;
             PIXELS_22: pixel1 = color2;
         endcase
     end
 
     always_comb begin
         chunk = 24'h000000;
-        for (i = 0; i != WORD_COUNT; i++) begin
+        for (i = 0; i != CHUNK_COUNT; i++) begin
             if (chunk_idx == CHUNK_IDX_WIDTH'(i)) begin
-                chunk = vgactrl_memory[i * 24 + 23 -: 24];
+                chunk = {vgactrl_memory[i * 24 + 7 -: 8], vgactrl_memory[i * 24 + 15 -: 8], vgactrl_memory[i * 24 + 23 -: 8]};
             end
         end
     end
