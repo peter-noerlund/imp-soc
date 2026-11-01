@@ -24,19 +24,19 @@ module vga_device
         output wire [31:0] wb_rdt,
 
         output wire vgaconfig_enabled,
-        output wire [ADDR_WIDTH - 1 : 0] vgaconfig_adr
+        output wire [ADDR_WIDTH - 1 : 0] vgaconfig_addr
     );
 
     bit enabled;
-    bit [ADDR_WIDTH - 3 : 0] adr;
+    bit [ADDR_WIDTH - 3 : 0] addr;
     
     assign wb_ack = wb_cyc & wb_stb;
     assign wb_rty = 1'b0;
     assign wb_err = 1'b0;
-    assign wb_rdt = wb_adr[2] == 1'b0 ? {31'h00000000, vgaconfig_enabled} : 32'(vgaconfig_adr);
+    assign wb_rdt = wb_adr[2] == 1'b0 ? {31'h00000000, vgaconfig_enabled} : 32'(vgaconfig_addr);
 
     assign vgaconfig_enabled = enabled;
-    assign vgaconfig_adr = {adr, 2'b00};
+    assign vgaconfig_addr = {addr, 2'b00};
 
     always_ff @ (posedge clk) begin
         if (rst) begin
@@ -48,7 +48,7 @@ module vga_device
 
     always_ff @ (posedge clk) begin
         if (!rst && wb_cyc && wb_stb && wb_we && wb_adr[2] == 1'b1) begin
-            adr <= wb_dat[ADDR_WIDTH - 1 : 2];
+            addr <= wb_dat[ADDR_WIDTH - 1 : 2];
         end
     end
 endmodule

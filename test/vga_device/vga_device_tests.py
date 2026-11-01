@@ -25,7 +25,7 @@ async def test_wishbone_interface(dut):
     await utils.wishbone_write32(dut, 4, 0xFFFFFFFF)
 
     assert dut.vgaconfig_enabled.value == 0
-    assert int(dut.vgaconfig_adr.value) == 0xFFFFFFFC
+    assert int(dut.vgaconfig_addr.value) == 0xFFFFFFFC
 
     val = await utils.wishbone_read32(dut, 0)
     assert val == 0
@@ -36,7 +36,7 @@ async def test_wishbone_interface(dut):
     await utils.wishbone_write32(dut, 0, 1)
 
     assert dut.vgaconfig_enabled.value == 1
-    assert dut.vgaconfig_adr.value == 0xFFFFFFFC
+    assert dut.vgaconfig_addr.value == 0xFFFFFFFC
 
     val = await utils.wishbone_read32(dut, 0)
     assert val == 1
@@ -47,12 +47,12 @@ async def test_wishbone_interface(dut):
     await utils.wishbone_write32(dut, 0, 0)
 
     assert dut.vgaconfig_enabled.value == 0
-    assert dut.vgaconfig_adr.value == 0xFFFFFFFC
+    assert dut.vgaconfig_addr.value == 0xFFFFFFFC
 
     await utils.wishbone_write32(dut, 4, 0xDEADBEEF)
 
     assert dut.vgaconfig_enabled.value == 0
-    assert dut.vgaconfig_adr.value == 0xDEADBEEC
+    assert dut.vgaconfig_addr.value == 0xDEADBEEC
 
     val = await utils.wishbone_read32(dut, 0)
     assert val == 0
