@@ -136,6 +136,9 @@ module soc
     );
 
     wb_arbiter #(.ADDR_WIDTH(25)) arbiter(
+        .clk(clk),
+        .rst(rst),
+        
         .wb_in0_cyc(wb_vga_cyc),
         .wb_in0_stb(wb_vga_stb),
         .wb_in0_adr(wb_vga_adr),
