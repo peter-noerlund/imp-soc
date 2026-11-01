@@ -37,8 +37,9 @@ project:
     - serv/servile/servile_arbiter.v
     - soc.sv
     - uart_device.sv
-    - video_device.sv
-    - video_renderer.sv
+    - vga_device.sv
+    - vga_renderer.sv
+    - vga_timing.sv
     - wb_arbiter.sv
     - wb_interconnect.sv
     - write_aligner.sv

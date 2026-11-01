@@ -61,7 +61,7 @@ module wb_arbiter
     assign wb_out_cyc = wb_in0_cyc | wb_in1_cyc;
     assign wb_out_stb = wb_in0_cyc ? wb_in0_stb : wb_in1_stb;
     assign wb_out_adr = wb_in0_cyc ? wb_in0_adr : wb_in1_adr;
-    assign wb_out_we = wb_in0_cyc ? wb_in0_we : wb_in1_we;
+    assign wb_out_we  = wb_in0_cyc ? wb_in0_we : wb_in1_we;
     assign wb_out_sel = wb_in0_cyc ? wb_in0_sel : wb_in1_sel;
     assign wb_out_dat = wb_in0_cyc ? wb_in0_dat : wb_in1_dat;
     assign wb_out_cti = wb_in0_cyc ? wb_in0_cti : wb_in1_cti;
