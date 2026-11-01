@@ -17,7 +17,7 @@ module tt_um_pchri03_imp_soc
     assign uio_oe[3] = 1'b1;        // SCK
     assign uio_oe[7:6] = 2'b11;     // CS2 + CS3
 
-    soc #(.ENABLE_UART(0), .ENABLE_VIDEO(0)) soc(
+    soc #(.ENABLE_UART(0)) soc(
         .clk(clk),
         .rst(!rst_n),
 

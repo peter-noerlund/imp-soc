@@ -1,0 +1,120 @@
+#read_liberty -lib /home/pch/.volare/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+read_liberty -lib /home/pch/.ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+verilog_defines -DFPGA
+read_verilog -sv vga_device.sv
+hierarchy -check -top vga_device -nokeep_prints -nokeep_asserts
+
+# librelane_synth
+hierarchy -check -top vga_device -nokeep_prints -nokeep_asserts
+
+# librelane_proc()
+proc_clean
+proc_rmdead
+proc_prune
+proc_init
+proc_arst
+proc_rom
+proc_mux
+proc_dlatch
+proc_dff
+proc_memwr
+proc_clean
+check
+opt_expr
+
+flatten
+
+opt_expr
+opt_clean
+
+# librelane_opt(d, nodffe=True, nosdff=True)
+opt_expr
+opt_merge -nomux
+opt_muxtree
+opt_reduce
+opt_merge
+opt_dff -nodffe -nosdff
+opt_clean
+opt_expr
+
+fsm
+
+# librelane_opt(d)
+opt_expr
+opt_merge -nomux
+opt_muxtree
+opt_reduce
+opt_merge
+opt_dff
+opt_clean
+opt_expr
+
+wreduce
+peepopt
+opt_clean
+
+alumacc
+share
+
+# librelane_opt(d)
+opt_expr
+opt_merge -nomux
+opt_muxtree
+opt_reduce
+opt_merge
+opt_dff
+opt_clean
+opt_expr
+
+memory -nomap
+opt_clean
+
+# librelane_opt(d, opt_share=True, mux_undef=True, mux_bool=True, undriven=undriven, fine=True)
+opt_expr -mux_undef -mux_bool -fine
+opt_merge -nomux
+opt_muxtree
+opt_reduce -fine
+opt_merge
+opt_share
+opt_dff
+opt_clean
+opt_expr
+
+techmap
+
+# librelane_opt(fast=True)
+opt_expr
+opt_merge
+opt_dff
+opt_clean
+
+# librelane_opt(fast=True)
+opt_expr
+opt_merge
+opt_dff
+opt_clean
+
+abc
+opt -fast
+
+hierarchy -check -top vga_device -nokeep_prints -nokeep_asserts
+check
+stat -liberty /home/pch/.ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+opt
+opt_clean -purge
+
+stat -liberty /home/pch/.ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+techmap -map /home/pch/.ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.tech/openlane/sky130_fd_sc_hd/latch_map.v
+simplemap
+
+dfflibmap -liberty /home/pch/.volare/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+stat -liberty /home/pch/.ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+abc -script sky130a.abc -liberty /home/pch/.volare/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+
+clean
+stat -liberty /home/pch/.ciel/ciel/sky130/versions/8afc8346a57fe1ab7934ba5a6056ea8b43078e71/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib

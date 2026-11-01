@@ -2,6 +2,12 @@
 .vscode
 __pycache__
 build
+pico_ice/pico_ice.asc
+pico_ice/pico_ice.log
+pico_ice/pico_ice_pll.v
+pico_ice/pico_ice.bin
+pico_ice/pico_ice.json
+pico_ice/pico_ice_timing.txt
 results.xml
 runs
 src/config_merged.json

@@ -12,14 +12,11 @@ VGA_ADDR at offset 4
 VGA_CTRL controls how the VGA device runs:
 
 Bit 0:      Enable flag
-Bit 8-11:   Vertical scale:
-                0=600 pixels
-                1=300 pixels
-                2=200 pixels
-                3=150 pixels
-                4=120 pixels
-                5=100 pixels
-                7=75 pixels
+Bit 8-10:   Vertical scale:
+                0=480 pixels
+                1=240 pixels
+                2=160 pixels
+                3=80 pixels
 
 VGA_ADDR controls where the frame buffer is stored. The frame buffer is 64 bytes times the vertical height.
 The address must align to 64 bytes (The 14 least significant bits are always zero)
