@@ -1,0 +1,9 @@
+.venv
+.vscode
+build
+run
+src/config_merged.json
+src/user_config.json
+sim_build
+__pycache__
+results.xml

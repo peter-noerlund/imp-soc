@@ -1,0 +1,153 @@
+
+import cocotb
+from cocotb.clock import Clock
+from cocotb.triggers import ClockCycles
+from cocotb.types import Logic
+
+
+async def rf_read_write(dut, rreg0: int, rreg1: int, wreg0: int = 0, wvalue0: int = 0):
+    dut.rf_rreq.value = 1
+    dut.rf_wreq.value = 0
+    
+    await ClockCycles(dut.clk, 1)
+
+    dut.rf_rreq.value = 0
+    dut.rf_wen0.value = 1 if wreg0 != 0 else 0
+    dut.rf_wreg0.value = wreg0
+    dut.rf_rreg0.value = rreg0
+    dut.rf_rreg1.value = rreg1
+
+    for i in range(64):
+        if dut.rf_ready.value == 1:
+            break
+        await ClockCycles(dut.clk, 1)
+
+    assert dut.rf_ready.value == 1
+
+    rvalue0 = 0
+    rvalue1 = 0
+    for i in range(32):
+        dut.rf_wdata0.value = wvalue0 & 1
+        wvalue0 >>= 1
+        await ClockCycles(dut.clk, 1)
+        if dut.rf_rdata0.value != Logic('X'):
+            rvalue0 |= int(dut.rf_rdata0.value) << i
+        if dut.rf_rdata1.value != Logic('X'):
+            rvalue1 |= int(dut.rf_rdata1.value) << i
+
+    dut.rf_rreg0.value = 0
+    dut.rf_rreg1.value = 0
+    dut.rf_wen0.value = 0
+    dut.rf_wreg0.value = 0
+    dut.rf_wdata0.value = 0
+
+    return (rvalue0, rvalue1)
+
+
+async def rf_write(dut, wreg0: int, wvalue0: int):
+    dut.rf_rreq.value = 0
+    dut.rf_wreq.value = 1
+
+    await ClockCycles(dut.clk, 1)
+
+    assert dut.rf_ready.value == 1
+
+    dut.rf_wreq.value = 0
+    dut.rf_rreg0.value = 0
+    dut.rf_rreg1.value = 0
+    dut.rf_wen0.value = 1
+    dut.rf_wreg0.value = wreg0
+    dut.rf_wdata0.value = wvalue0 & 1
+    wvalue0 >>= 1
+
+    for i in range(31):
+        await ClockCycles(dut.clk, 1)
+
+        dut.rf_wdata0.value = wvalue0 & 1
+        wvalue0 >>= 1
+
+    await ClockCycles(dut.clk, 1)
+
+    dut.rf_wreq.value = 0
+    dut.rf_wen0.value = 0
+    dut.rf_wreg0.value = 0
+    dut.rf_wdata0.value = 0
+
+@cocotb.test()
+async def test_read_write(dut):
+    clock = Clock(dut.clk, 19.860, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    dut.rst.value = 1
+
+    await ClockCycles(dut.clk, 10)
+    dut.rst.value = 0
+    await ClockCycles(dut.clk, 10)
+
+    reg_count = 16
+
+    for reg in range(1, reg_count):
+        await rf_read_write(dut, reg, reg, reg, 0)
+
+    for reg in range(reg_count):
+        (value0, value1) = await rf_read_write(dut, reg, reg)
+        assert value0 == 0
+        assert value1 == 0
+
+    for reg in range(1, reg_count):
+        for bit in range(32):
+            expected_value = 1 << bit
+            await rf_read_write(dut, 0, 0, reg, expected_value)
+
+            (value0, value1) = await rf_read_write(dut, reg, reg)
+            assert value0 == expected_value
+            assert value1 == expected_value
+
+            for other_reg in range(0, reg):
+                if reg == other_reg:
+                    continue
+
+                (value0, value1) = await rf_read_write(dut, reg, other_reg)
+                assert value0 == expected_value
+                assert value1 == 0
+
+                (value0, value1) = await rf_read_write(dut, other_reg, reg)
+                assert value0 == 0
+                assert value1 == expected_value
+
+        await rf_read_write(dut, 0, 0, reg, 0)
+
+
+@cocotb.test()
+async def test_write_only(dut):
+    clock = Clock(dut.clk, 19.860, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    dut.rst.value = 1
+
+    await ClockCycles(dut.clk, 10)
+    dut.rst.value = 0
+    await ClockCycles(dut.clk, 10)
+
+    reg_count = 16
+
+    for reg in range(1, reg_count):
+        await rf_write(dut, reg, 0)
+
+    for reg in range(reg_count):
+        (value0, value1) = await rf_read_write(dut, reg, reg)
+        assert value0 == 0
+        assert value1 == 0
+
+    for reg in range(1, reg_count):
+        for bit in range(32):
+            expected_value = 1 << bit
+            await rf_write(dut, reg, expected_value)
+
+            (value0, value1) = await rf_read_write(dut, reg, reg)
+            assert value0 == expected_value
+            assert value1 == expected_value
+
+        await rf_write(dut, reg, 0)
+
+

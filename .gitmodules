@@ -1,0 +1,6 @@
+[submodule "tt-support-tools"]
+	path = tt-support-tools
+	url = https://github.com/TinyTapeout/tt-support-tools
+[submodule "src/serv"]
+	path = src/serv
+	url = https://github.com/olofk/serv.git
