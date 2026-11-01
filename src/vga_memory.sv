@@ -52,8 +52,6 @@ module vga_memory
     localparam int WORD_WIDTH = $clog2(WORD_COUNT);
     localparam int LINE_WIDTH = $clog2(LINE_COUNT);
 
-    bit [WORD_COUNT * 32 - 1 : 0] mem;
-
     bit [WORD_WIDTH - 1 : 0] word_idx;
     bit [LINE_WIDTH - 1 : 0] line_idx;
 
@@ -64,6 +62,8 @@ module vga_memory
     bit cyc;
     wire ack;
     wire last_word;
+
+    wire [WORD_COUNT * 24 - 1 : 0] memory;
 
     genvar i;
 
@@ -78,7 +78,7 @@ module vga_memory
     assign ack = cyc & (wb_ack | wb_rty | wb_err);
     assign last_word = word_idx == WORD_WIDTH'(WORD_COUNT - 1);
 
-    assign vgactrl_memory = mem;
+    assign vgactrl_memory = {memory[23:0], memory[WORD_COUNT * 24 - 1 : 24]};
 
     // Word index
     always_ff @ (posedge clk) begin
@@ -138,39 +138,11 @@ module vga_memory
     end
 
     // Memory
-`ifdef FPGA
     generate
-        for (i = 1; i != WORD_COUNT; ++i) begin
-            always_ff @ (posedge clk) begin
-                // At this point, word_idx has been incremented, so we need to store the buffer in the previous chunk
-                if (latch1 && word_idx == WORD_WIDTH'(i)) begin
-                    mem[i * 32 - 1 -: 32] = buffer;
-                end
-            end
-        end
-        
-        always_ff @ (posedge clk) begin
-            if (latch1 && word_idx == WORD_WIDTH'(0)) begin
-                mem[WORD_COUNT * 32 - 1 -: 32] = buffer;
-            end
+        for (i = 0; i != WORD_COUNT; i++) begin: mem_n
+            vga_latch #(.WIDTH(24)) mem(.clk(clk), .gate(latch1 && word_idx == WORD_WIDTH'(i)), .data_in(buffer), .data_out(memory[i * 24 + 23 -: 24]));
         end
     endgenerate
-`else // FPGA
-    generate
-        for (i = 1; i != WORD_COUNT; ++i) begin
-            always_latch begin
-                // At this point, word_idx has been incremented, so we need to store the buffer in the previous chunk
-                if (latch1 && word_idx == WORD_WIDTH'(i)) begin
-                    mem[i * 24 - 1 -: 24] = buffer;
-                end
-            end
-        end
-        
-        always_latch begin
-            if (latch1 && word_idx == WORD_WIDTH'(0)) begin
-                mem[WORD_COUNT * 24 - 1 -: 24] = buffer;
-            end
-        end
-    endgenerate
-`endif // FPGA
+
+
 endmodule

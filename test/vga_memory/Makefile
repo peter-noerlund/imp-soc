@@ -5,7 +5,7 @@ SIM = icarus
 TOPLEVEL_LANG = verilog
 
 # List of Verilog source files.
-VERILOG_SOURCES = $(CURDIR)/../../src/vga_memory.sv
+VERILOG_SOURCES = $(CURDIR)/../../src/vga_memory.sv $(CURDIR)/../../src/vga_latch.sv
 
 # The name of the toplevel module/entity in your design.
 TOPLEVEL = vga_memory

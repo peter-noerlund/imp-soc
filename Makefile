@@ -18,6 +18,7 @@ VERILOG_SOURCES=\
 	src/soc.sv \
 	src/tt_um_pchri03_imp_soc.v \
 	src/vga_device.sv \
+    src/vga_latch.sv \
 	src/vga_memory.sv \
 	src/vga_renderer.sv \
 	src/vga_timing.sv \

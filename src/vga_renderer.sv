@@ -69,7 +69,7 @@ module vga_renderer
     assign pixel_group_subpixel_idx = pixel_idx[0];
 
     // Each chunk represents 8 pixels
-    assign chunk_idx = vga_hpos[9:5];
+    assign chunk_idx = vga_hpos[CHUNK_IDX_WIDTH + 5 - 1 : 5];
 
     assign color1 = chunk[23:18];
     assign color2 = chunk[17:12];

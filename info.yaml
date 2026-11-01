@@ -36,6 +36,7 @@ project:
     - serv/servile/servile_arbiter.v
     - soc.sv
     - vga_device.sv
+    - vga_latch.sv
     - vga_memory.sv
     - vga_renderer.sv
     - vga_timing.sv

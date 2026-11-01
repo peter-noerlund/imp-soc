@@ -108,9 +108,9 @@ module soc
         .wb_rdt(wb_cpu_rdt)
     );
 
-    wb_interconnect #(.ADDR_WIDTH(27)) wb_interconnect(
+    wb_interconnect #(.ADDR_WIDTH(26)) wb_interconnect(
         .wb_in_stb(wb_cpu_stb),
-        .wb_in_adr(wb_cpu_adr[26:0]),
+        .wb_in_adr(wb_cpu_adr[25:0]),
         .wb_in_ack(wb_cpu_ack),
         .wb_in_rty(wb_cpu_rty),
         .wb_in_err(wb_cpu_err),

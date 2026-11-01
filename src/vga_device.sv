@@ -31,7 +31,6 @@ module vga_device
     bit enabled;
     bit [ADDR_WIDTH - 15 : 0] addr;
     bit ack;
-    bit latch;
     
     assign wb_ack = wb_cyc & wb_stb & ack;
     assign wb_rty = 1'b0;
@@ -42,46 +41,20 @@ module vga_device
     assign vgaconfig_addr = {addr, 14'h0000};
 
     always_ff @ (posedge clk) begin
-        ack <= !rst & wb_cyc & wb_stb & (!wb_we | latch);
+        ack <= !rst & wb_cyc & wb_stb;
     end
 
     always_ff @ (posedge clk) begin
-        latch <= !rst & wb_cyc & wb_stb & wb_we & !latch & !ack;
-    end
-
-`ifdef FPGA
-    // Use flip-flops on FPGAs
-
-    always_ff @ (posedge clk) begin
-        if (latch && wb_adr[2] == 1'b0 && wb_sel[0] == 1'b1) begin
-            enabled <= wb_dat[0];
-        end
         if (rst) begin
             enabled <= 1'b0;
+        end else if (wb_cyc && wb_stb && wb_we && !ack && wb_adr[2] == 1'b0 && wb_sel[0] == 1'b1) begin
+            enabled <= wb_dat[0];
         end
     end
 
     always_ff @ (posedge clk) begin
-        if (latch && wb_adr[2] == 1'b1 && wb_sel == 4'b1111) begin
+        if (!rst && wb_cyc && wb_stb && wb_we && !ack && wb_adr[2] == 1'b1 && wb_sel == 4'b1111) begin
             addr <= wb_dat[ADDR_WIDTH - 1 : 14];
         end
     end
-`else // FPGA
-    // Use latches on ASIC and in simulation
-
-    always_latch begin
-        if (latch && wb_adr[2] == 1'b0 && wb_sel[0] == 1'b1) begin
-            enabled = wb_dat[0];
-        end
-        if (rst) begin
-            enabled = 1'b0;
-        end
-    end
-
-    always_latch begin
-        if (latch && wb_adr[2] == 1'b1 && wb_sel == 4'b1111) begin
-            addr = wb_dat[ADDR_WIDTH - 1 : 14];
-        end
-    end
-`endif // FPGA
 endmodule
