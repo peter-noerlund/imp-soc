@@ -13,9 +13,10 @@
 
   "//": "PL_TARGET_DENSITY_PCT - You can increase this if Global Placement fails with error GPL-0302.",
   "//": "Users have reported that values up to 80 worked well for them.",
+  "SYNTH_STRATEGY": "AREA 2",
+  "SYNTH_MAX_FANOUT": 37,
   "PL_TARGET_DENSITY_PCT": 70,
-  "FP_CORE_UTIL": 65,
-  "SYNTH_MAX_FANOUT": 20,
+  "FP_CORE_UTIL": 70,
 
   "//": "Keep hierarchy, so we can estimate area per module",
   "SYNTH_AUTONAME": true,
