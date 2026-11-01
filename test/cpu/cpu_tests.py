@@ -7,14 +7,14 @@ from cocotb.triggers import ClockCycles
 @cocotb.test()
 async def test_store(dut):
     flash = []
-    flash.append(utils.lui(utils.X1, 0x01000))
-    flash.append(utils.sb(utils.X1, utils.ZERO, 0))  # adr=00, sel=0001
-    flash.append(utils.sb(utils.X1, utils.ZERO, 5))  # adr=04, sel=0010
-    flash.append(utils.sb(utils.X1, utils.ZERO, 10)) # adr=08, sel=0100
-    flash.append(utils.sb(utils.X1, utils.ZERO, 15)) # adr=0C, sel=1000
-    flash.append(utils.sh(utils.X1, utils.ZERO, 16)) # adr=10, sel=0011
-    flash.append(utils.sh(utils.X1, utils.ZERO, 22)) # adr=14, sel=1100
-    flash.append(utils.sw(utils.X1, utils.ZERO, 24)) # adr=18, sel=1111
+    flash.append(utils.lui(utils.T0, 0x01000))
+    flash.append(utils.sb(utils.T0, utils.ZERO, 0))  # adr=00, sel=0001
+    flash.append(utils.sb(utils.T0, utils.ZERO, 5))  # adr=04, sel=0010
+    flash.append(utils.sb(utils.T0, utils.ZERO, 10)) # adr=08, sel=0100
+    flash.append(utils.sb(utils.T0, utils.ZERO, 15)) # adr=0C, sel=1000
+    flash.append(utils.sh(utils.T0, utils.ZERO, 16)) # adr=10, sel=0011
+    flash.append(utils.sh(utils.T0, utils.ZERO, 22)) # adr=14, sel=1100
+    flash.append(utils.sw(utils.T0, utils.ZERO, 24)) # adr=18, sel=1111
     flash.append(utils.jal(utils.ZERO, 0))
 
     ram = []
