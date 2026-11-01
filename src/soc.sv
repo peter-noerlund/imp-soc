@@ -60,6 +60,16 @@ module soc
     wire wb_uart_rty;
     wire [31:0] wb_uart_rdt;
 
+    // VGA
+    wire wb_vga_stb;
+    wire wb_vga_ack;
+    wire wb_vga_err;
+    wire wb_vga_rty;
+    wire [31:0] wb_vga_rdt;
+
+    wire vgaconfig_enabled;
+    wire [25:0] vgaconfig_addr;
+
     assign vga_hsync = 1'b1;
     assign vga_vsync = 1'b1;
     assign vga_red = 2'b00;
@@ -108,7 +118,13 @@ module soc
         .wb_uart_ack(wb_uart_ack),
         .wb_uart_rty(wb_uart_rty),
         .wb_uart_err(wb_uart_err),
-        .wb_uart_rdt(wb_uart_rdt)
+        .wb_uart_rdt(wb_uart_rdt),
+
+        .wb_vga_stb(wb_vga_stb),
+        .wb_vga_ack(wb_vga_ack),
+        .wb_vga_rty(wb_vga_rty),
+        .wb_vga_err(wb_vga_err),
+        .wb_vga_rdt(wb_vga_rdt)
     );
 
     memory_device memory_device(
@@ -172,5 +188,26 @@ module soc
         .wb_rdt(wb_uart_rdt),
 
         .uart_tx(uart_tx)
+    );
+
+    vga_device #(.ADDR_WIDTH(26)) vga_device(
+        .clk(clk),
+        .rst(rst),
+
+        .wb_cyc(wb_cyc),
+        .wb_stb(wb_vga_stb),
+        .wb_adr(wb_adr[24:0]),
+        .wb_we(wb_we),
+        .wb_sel(wb_sel),
+        .wb_dat(wb_dat),
+        .wb_cti(wb_cti),
+        .wb_bte(wb_bte),
+        .wb_ack(wb_vga_ack),
+        .wb_rty(wb_vga_rty),
+        .wb_err(wb_vga_err),
+        .wb_rdt(wb_vga_rdt),
+        
+        .vgaconfig_enabled(vgaconfig_enabled),
+        .vgaconfig_addr(vgaconfig_addr)
     );
 endmodule

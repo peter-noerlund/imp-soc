@@ -36,28 +36,40 @@ module wb_interconnect
         input wire wb_uart_ack,                         //! Wishbone signal ACK_I
         input wire wb_uart_err,                         //! Wishbone signal ERR_I
         input wire wb_uart_rty,                         //! Wishbone signal RTY_I
-        input wire [DATA_WIDTH - 1 : 0] wb_uart_rdt    //! Wishbone signal DAT_I
+        input wire [DATA_WIDTH - 1 : 0] wb_uart_rdt,   //! Wishbone signal DAT_I
+        //! @end
+
+        //! @virtualbus WB_VGA @dir output Wishbone signals for UART device
+        output wire wb_vga_stb,                        //! Wishbone signal STB_O
+        input wire wb_vga_ack,                         //! Wishbone signal ACK_I
+        input wire wb_vga_err,                         //! Wishbone signal ERR_I
+        input wire wb_vga_rty,                         //! Wishbone signal RTY_I
+        input wire [DATA_WIDTH - 1 : 0] wb_vga_rdt    //! Wishbone signal DAT_I
         //! @end
     );
 
     wire mem_sel;
     wire clock_sel;
     wire uart_sel;
+    wire vga_sel;
 
     assign mem_sel = wb_in_adr[25] == 1'b0;;
-    assign clock_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[2] == 1'b0;
-    assign uart_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[2] == 1'b1;
+    assign clock_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3:2] == 2'b00;
+    assign uart_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3:2] == 2'b01;
+    assign vga_sel = wb_in_adr[25] == 1'b1 && wb_in_adr[3] == 1'b1;
 
     assign wb_mem_stb = wb_in_stb & mem_sel;
     assign wb_clock_stb = wb_in_stb & clock_sel;
     assign wb_uart_stb = wb_in_stb & uart_sel;
+    assign wb_vga_stb = wb_in_stb & vga_sel;
 
-    assign wb_in_ack = wb_mem_ack | wb_clock_ack | wb_uart_ack;
-    assign wb_in_err = wb_mem_err | wb_clock_err | wb_uart_err;
-    assign wb_in_rty = wb_mem_rty | wb_clock_rty | wb_uart_rty;
+    assign wb_in_ack = wb_mem_ack | wb_clock_ack | wb_uart_ack | wb_vga_ack;
+    assign wb_in_err = wb_mem_err | wb_clock_err | wb_uart_err | wb_vga_err;
+    assign wb_in_rty = wb_mem_rty | wb_clock_rty | wb_uart_rty | wb_vga_rty;
 
     assign wb_in_rdt =
         mem_sel ? wb_mem_rdt :
         clock_sel ? wb_clock_rdt :
-        wb_uart_rdt;
+        uart_sel ? wb_uart_rdt :
+        wb_vga_rdt;
 endmodule
