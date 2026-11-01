@@ -31,11 +31,11 @@ fpga:
 	$(MAKE) -C fpga
 
 src/config_merged.json: src/config.json info.yaml
-	./tt-support-tools/tt-tool.py --create-user-config
+	./tt/tt-tool.py --create-user-config
 
 harden:
-	./tt-support-tools/tt_tool.py --create-user-config
-	./tt-support-tools/tt_tool.py --harden
+	./tt/tt_tool.py --create-user-config
+	./tt/tt_tool.py --harden
 
 lint:
 	verilator --lint-only $(VERILOG_SOURCES)
