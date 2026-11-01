@@ -1,7 +1,10 @@
-all: clock_device register_file uart_device mul_device write_aligner memory_device vga_timing cpu soc
+all: clock_device write_aligner memory_device register_file cpu vga_timing vga_memory vga_device soc
 
 clock_device:
 	$(MAKE) -C clock_device
+
+cpu:
+	$(MAKE) -C cpu
 
 memory_device:
 	$(MAKE) -C memory_device
@@ -9,14 +12,8 @@ memory_device:
 register_file:
 	$(MAKE) -C register_file
 
-cpu:
-	$(MAKE) -C cpu
-
 soc:
 	$(MAKE) -C soc
-
-uart_device:
-	$(MAKE) -C uart_device
 
 vga_device:
 	$(MAKE) -C vga_device
@@ -30,4 +27,4 @@ vga_timing:
 write_aligner:
 	$(MAKE) -C write_aligner
 
-.PHONY: clock_device register_file uart_device mul_device write_aligner memory_device cpu soc vga_device vga_memory vga_timing
+.PHONY: clock_device cpu memory_device register_file soc vga_device vga_memory vga_timing

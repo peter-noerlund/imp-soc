@@ -361,7 +361,7 @@ def _op_s(opcode: int, funct3: int, rs1: int, rs2: int, imm: int) -> int:
 
 
 def _op_b(opcode: int, funct3: int, rs1: int, rs2: int, imm: int) -> int:
-    return opcode | (((imm >> 11) & 0x1) << 7) | (((imm >> 1) & 0x0F) << 8) | (funct3 << 12) | (rs1 << 15) | (rs2 << 20) | (((imm >> 5) & 0x3F) << 25) | (((imm >> 12) & 0x01) << 30)
+    return opcode | (((imm >> 11) & 0x1) << 7) | (((imm >> 1) & 0x0F) << 8) | (funct3 << 12) | (rs1 << 15) | (rs2 << 20) | (((imm >> 5) & 0x3F) << 25) | (((imm >> 12) & 0x01) << 31)
 
 
 def _op_u(opcode: int, rd: int, imm: int) -> int:

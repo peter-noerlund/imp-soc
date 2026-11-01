@@ -94,9 +94,12 @@ async def test_read_write(dut):
         assert value0 == 0
         assert value1 == 0
 
-    for reg in range(1, reg_count):
+    for reg in range(reg_count):
         for bit in range(32):
-            expected_value = 1 << bit
+            if reg == 0 or reg == 3 or reg == 4:
+                expected_value = 0
+            else:
+                expected_value = 1 << bit
             await rf_read_write(dut, 0, 0, reg, expected_value)
 
             (value0, value1) = await rf_read_write(dut, reg, reg)
@@ -120,7 +123,7 @@ async def test_read_write(dut):
 
 @cocotb.test()
 async def test_write_only(dut):
-    clock = Clock(dut.clk, 19.860, unit="ns")
+    clock = Clock(dut.clk, 15.384, unit="ns")
     cocotb.start_soon(clock.start())
 
     dut.rst.value = 1
@@ -139,9 +142,12 @@ async def test_write_only(dut):
         assert value0 == 0
         assert value1 == 0
 
-    for reg in range(1, reg_count):
+    for reg in range(reg_count):
         for bit in range(32):
-            expected_value = 1 << bit
+            if reg == 0 or reg == 3 or reg == 4: # zero, gp and tp are all 0
+                expected_value = 0
+            else:
+                expected_value = 1 << bit
             await rf_write(dut, reg, expected_value)
 
             (value0, value1) = await rf_read_write(dut, reg, reg)

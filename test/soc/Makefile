@@ -12,8 +12,11 @@ VERILOG_SOURCES =  \
 	$(CURDIR)/../../src/dummy_device.sv \
 	$(CURDIR)/../../src/memory_device.sv \
 	$(CURDIR)/../../src/register_file.sv \
-	$(CURDIR)/../../src/uart_device.sv \
 	$(CURDIR)/../../src/vga_device.sv \
+	$(CURDIR)/../../src/vga_latch.sv \
+	$(CURDIR)/../../src/vga_memory.sv \
+	$(CURDIR)/../../src/vga_renderer.sv \
+	$(CURDIR)/../../src/vga_timing.sv \
 	$(CURDIR)/../../src/wb_arbiter.sv \
 	$(CURDIR)/../../src/wb_interconnect.sv \
 	$(CURDIR)/../../src/write_aligner.sv \
