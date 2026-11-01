@@ -7,20 +7,21 @@ from cocotb.triggers import ClockCycles
 @cocotb.test()
 async def test_store(dut):
     flash = []
-    flash.append(utils.sb(utils.ZERO, utils.ZERO, 0))  # adr=00, sel=0001
-    flash.append(utils.sb(utils.ZERO, utils.ZERO, 5))  # adr=04, sel=0010
-    flash.append(utils.sb(utils.ZERO, utils.ZERO, 10)) # adr=08, sel=0100
-    flash.append(utils.sb(utils.ZERO, utils.ZERO, 15)) # adr=0C, sel=1000
-    flash.append(utils.sh(utils.ZERO, utils.ZERO, 16)) # adr=10, sel=0011
-    flash.append(utils.sh(utils.ZERO, utils.ZERO, 22)) # adr=14, sel=1100
-    flash.append(utils.sw(utils.ZERO, utils.ZERO, 24)) # adr=18, sel=1111
+    flash.append(utils.lui(utils.X1, 0x01000))
+    flash.append(utils.sb(utils.X1, utils.ZERO, 0))  # adr=00, sel=0001
+    flash.append(utils.sb(utils.X1, utils.ZERO, 5))  # adr=04, sel=0010
+    flash.append(utils.sb(utils.X1, utils.ZERO, 10)) # adr=08, sel=0100
+    flash.append(utils.sb(utils.X1, utils.ZERO, 15)) # adr=0C, sel=1000
+    flash.append(utils.sh(utils.X1, utils.ZERO, 16)) # adr=10, sel=0011
+    flash.append(utils.sh(utils.X1, utils.ZERO, 22)) # adr=14, sel=1100
+    flash.append(utils.sw(utils.X1, utils.ZERO, 24)) # adr=18, sel=1111
     flash.append(utils.jal(utils.ZERO, 0))
 
     ram = []
     for i in range(7):
         ram.append(0xFFFFFFFF)
 
-    cocotb.start_soon(utils.wishbone_bus(dut, flash, ram, ram_address=0))
+    cocotb.start_soon(utils.wishbone_bus(dut, flash, ram))
 
     await utils.init(dut)
 
@@ -40,21 +41,23 @@ async def test_slli(dut):
     count = 256
 
     flash = []
-    flash.append(utils.addi(utils.X3, utils.ZERO, 0))
+    flash.append(utils.lui(utils.T0, 0x01000))                  # T0 points to RAM
     for i in range(count):
-        flash.append(utils.addi(utils.X1, utils.ZERO, i))
+        flash.append(utils.addi(utils.T1, utils.ZERO, i))       # T1 = i
         for j in range(32):
-            flash.append(utils.slli(utils.X2, utils.X1, j))
-            flash.append(utils.sw(utils.X3, utils.X2, 0))
-            flash.append(utils.addi(utils.X3, utils.X3, 4))
-    flash.append(utils.addi(utils.X1, utils.ZERO, 1))
-    flash.append(utils.sw(utils.X3, utils.X1, 0))
+            flash.append(utils.slli(utils.T2, utils.T1, j))     # T2 = T1 << i
+            flash.append(utils.sw(utils.T0, utils.T2, 0))       # T0[0] = T3
+            flash.append(utils.addi(utils.T0, utils.T0, 4))     # T0 += 4
+    
+    flash.append(utils.addi(utils.T1, utils.ZERO, 1))           # T1 = 1
+    flash.append(utils.sw(utils.T0, utils.T1, 0))               # T0[0] = T1
+    flash.append(utils.jal(utils.ZERO, 0))                      # J $+0
 
     ram = []
     for i in range(count * 32 + 1):
         ram.append(0)
 
-    cocotb.start_soon(utils.wishbone_bus(dut, flash, ram, ram_address=0))
+    cocotb.start_soon(utils.wishbone_bus(dut, flash, ram))
 
     await utils.init(dut)
 
