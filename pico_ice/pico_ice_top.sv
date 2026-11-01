@@ -15,9 +15,9 @@ module pico_ice_top
         input wire SW2
     );
 
-    localparam [0:0] ENABLE_CLOCK_DEVICE = 0;
+    localparam [0:0] ENABLE_CLOCK_DEVICE = 1;
     localparam [0:0] ENABLE_LED_DEVICE = 1;
-    localparam [0:0] ENABLE_VGA_DEVICE = 0;
+    localparam [0:0] ENABLE_VGA_DEVICE = 1;
     
     // ICE_PMOD0 is used for VGA PMOD
     // ICE_PMOD1 is used for SNES PMOD
