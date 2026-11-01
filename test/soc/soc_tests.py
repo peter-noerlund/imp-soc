@@ -12,10 +12,10 @@ async def test_soc_uart(dut):
 
     flash = bytearray(16 * 1024 * 1024)
     code = [
-        utils.lui(utils.T1, 0x02000),
-        utils.addi(utils.T2, utils.ZERO, 0x50),
-        utils.sb(utils.T1, utils.T2, 0x4),
-        utils.jal(utils.ZERO, 0)
+        utils.lui(utils.T0, 0x02000),               # T0 = 0x02000000
+        utils.addi(utils.T1, utils.ZERO, 0x50),     # T1 = 0x50
+        utils.sb(utils.T0, utils.T1, 0x4),          # T0[4] = T1
+        utils.jal(utils.ZERO, 0)                    # j $+0
     ]
     for i in range(len(code)):
         instr = code[i]
