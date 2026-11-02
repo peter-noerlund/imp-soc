@@ -19,14 +19,14 @@ set_io --warn-no-port   ICE_PMOD0[6]    46
 set_io --warn-no-port   ICE_PMOD0[7]    44
 
 # ICE_PMOD1 (upper left PMOD, next to ICE40UP5K) [Represents ui]
-#set_io --warn-no-port   ICE_PMOD1[0]    43
-#set_io --warn-no-port   ICE_PMOD1[1]    38
-#set_io --warn-no-port   ICE_PMOD1[2]    34
-#set_io --warn-no-port   ICE_PMOD1[3]    31
-#set_io --warn-no-port   ICE_PMOD1[4]    42
-#set_io --warn-no-port   ICE_PMOD1[5]    36
-#set_io --warn-no-port   ICE_PMOD1[6]    32
-#set_io --warn-no-port   ICE_PMOD1[7]    28
+set_io --warn-no-port   ICE_PMOD1[0]    43
+set_io --warn-no-port   ICE_PMOD1[1]    38
+set_io --warn-no-port   ICE_PMOD1[2]    34
+set_io --warn-no-port   ICE_PMOD1[3]    31
+set_io --warn-no-port   ICE_PMOD1[4]    42
+set_io --warn-no-port   ICE_PMOD1[5]    36
+set_io --warn-no-port   ICE_PMOD1[6]    32
+set_io --warn-no-port   ICE_PMOD1[7]    28
 
 # ICE_PMOD2 (upper right PMOD, next to ICE40UP5K, shared with ICE2040) [Represents uio]
 set_io --warn-no-port   ICE_PMOD2[0]    25 # RP1

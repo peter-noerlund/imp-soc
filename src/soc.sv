@@ -3,14 +3,15 @@
 module soc
     #(
         parameter [0:0] ENABLE_CLOCK_DEVICE=1,
-        parameter [0:0] ENABLE_LED_DEVICE=1,
-        parameter [0:0] ENABLE_VGA_DEVICE=1
+        parameter [0:0] ENABLE_INPUT_DEVICE=1,
+        parameter [0:0] ENABLE_AUDIO_DEVICE=1,
+        parameter [0:0] ENABLE_VGA_DEVICE=1,
+        parameter [0:0] ENABLE_RAW_INPUT=1,
+        parameter int GAMEPAD_COUNT=2
     )
     (
         input wire clk,
         input wire rst,
-
-        output wire [4:0] leds,
 
         output wire vga_hsync,
         output wire vga_vsync,
@@ -23,7 +24,10 @@ module soc
         output wire [3:0] spi_sio_oe,
         input wire [3:0] spi_sio_in,
         output wire spi_flash_ss_n,
-        output wire spi_psram_ss_n
+        output wire spi_psram_ss_n,
+
+        input wire [7:0] input_pmod,
+        output wire audio_out
     );
 
     // Main wishbone bus
@@ -56,12 +60,19 @@ module soc
     wire wb_cpu_clock_err;
     wire [31:0] wb_cpu_clock_rdt;
 
-    // Debug device
-    wire wb_cpu_led_stb;
-    wire wb_cpu_led_ack;
-    wire wb_cpu_led_rty;
-    wire wb_cpu_led_err;
-    wire [31:0] wb_cpu_led_rdt;
+    // Input device
+    wire wb_cpu_input_stb;
+    wire wb_cpu_input_ack;
+    wire wb_cpu_input_rty;
+    wire wb_cpu_input_err;
+    wire [31:0] wb_cpu_input_rdt;
+
+    // Audio device
+    wire wb_cpu_audio_stb;
+    wire wb_cpu_audio_ack;
+    wire wb_cpu_audio_rty;
+    wire wb_cpu_audio_err;
+    wire [31:0] wb_cpu_audio_rdt;
 
     // VGA device
     wire wb_cpu_vga_stb;
@@ -122,12 +133,18 @@ module soc
         .wb_clock_err(wb_cpu_clock_err),
         .wb_clock_rdt(wb_cpu_clock_rdt),
 
-        .wb_led_stb(wb_cpu_led_stb),
-        .wb_led_ack(wb_cpu_led_ack),
-        .wb_led_rty(wb_cpu_led_rty),
-        .wb_led_err(wb_cpu_led_err),
-        .wb_led_rdt(wb_cpu_led_rdt),
+        .wb_input_stb(wb_cpu_input_stb),
+        .wb_input_ack(wb_cpu_input_ack),
+        .wb_input_rty(wb_cpu_input_rty),
+        .wb_input_err(wb_cpu_input_err),
+        .wb_input_rdt(wb_cpu_input_rdt),
 
+        .wb_audio_stb(wb_cpu_audio_stb),
+        .wb_audio_ack(wb_cpu_audio_ack),
+        .wb_audio_rty(wb_cpu_audio_rty),
+        .wb_audio_err(wb_cpu_audio_err),
+        .wb_audio_rdt(wb_cpu_audio_rdt),
+ 
         .wb_vga_stb(wb_cpu_vga_stb),
         .wb_vga_ack(wb_cpu_vga_ack),
         .wb_vga_rty(wb_cpu_vga_rty),
@@ -161,14 +178,14 @@ module soc
     );
 
     generate
-        if (ENABLE_CLOCK_DEVICE) begin
-            clock_device #(.ADDR_WIDTH(2)) clock_device(
+        if (ENABLE_CLOCK_DEVICE) begin: clock_device
+            clock_device #(.ADDR_WIDTH(3)) clock_device(
                 .clk(clk),
                 .rst(rst),
 
                 .wb_cyc(wb_cpu_cyc),
                 .wb_stb(wb_cpu_clock_stb),
-                .wb_adr(wb_cpu_adr[1:0]),
+                .wb_adr(wb_cpu_adr[2:0]),
                 .wb_we(wb_cpu_we),
                 .wb_sel(wb_cpu_sel),
                 .wb_dat(wb_cpu_dat),
@@ -179,14 +196,14 @@ module soc
                 .wb_err(wb_cpu_clock_err),
                 .wb_rdt(wb_cpu_clock_rdt)
             );
-        end else begin
-            dummy_device #(.ADDR_WIDTH(2)) clock_device(
+        end else begin: no_clock_device
+            dummy_device #(.ADDR_WIDTH(3)) clock_device(
                 .clk(clk),
                 .rst(rst),
 
                 .wb_cyc(wb_cpu_cyc),
                 .wb_stb(wb_cpu_clock_stb),
-                .wb_adr(wb_cpu_adr[1:0]),
+                .wb_adr(wb_cpu_adr[2:0]),
                 .wb_we(wb_cpu_we),
                 .wb_sel(wb_cpu_sel),
                 .wb_dat(wb_cpu_dat),
@@ -201,51 +218,95 @@ module soc
     endgenerate
 
     generate
-        if (ENABLE_LED_DEVICE) begin
-            led_device #(.ADDR_WIDTH(2), .LED_WIDTH(5)) led_device(
+        if (ENABLE_INPUT_DEVICE) begin: input_device
+            input_device #(.GAMEPAD_COUNT(GAMEPAD_COUNT), .ENABLE_RAW_INPUT(ENABLE_RAW_INPUT), .ADDR_WIDTH(3)) input_device(
                 .clk(clk),
                 .rst(rst),
 
                 .wb_cyc(wb_cpu_cyc),
-                .wb_stb(wb_cpu_led_stb),
-                .wb_adr(wb_cpu_adr[1:0]),
+                .wb_stb(wb_cpu_input_stb),
+                .wb_adr(wb_cpu_adr[2:0]),
                 .wb_we(wb_cpu_we),
                 .wb_sel(wb_cpu_sel),
                 .wb_dat(wb_cpu_dat),
                 .wb_cti(wb_cpu_cti),
                 .wb_bte(wb_cpu_bte),
-                .wb_ack(wb_cpu_led_ack),
-                .wb_rty(wb_cpu_led_rty),
-                .wb_err(wb_cpu_led_err),
-                .wb_rdt(wb_cpu_led_rdt),
-                
-                .leds(leds)
+                .wb_ack(wb_cpu_input_ack),
+                .wb_rty(wb_cpu_input_rty),
+                .wb_err(wb_cpu_input_err),
+                .wb_rdt(wb_cpu_input_rdt),
+            
+                .input_pmod(input_pmod)    
             );
-        end else begin
-            assign leds = 5'b00000;
-
-            dummy_device #(.ADDR_WIDTH(2)) led_device(
+        end else begin: no_input_device
+            dummy_device #(.ADDR_WIDTH(3)) input_device(
                 .clk(clk),
                 .rst(rst),
 
                 .wb_cyc(wb_cpu_cyc),
-                .wb_stb(wb_cpu_led_stb),
-                .wb_adr(wb_cpu_adr[1:0]),
+                .wb_stb(wb_cpu_input_stb),
+                .wb_adr(wb_cpu_adr[2:0]),
                 .wb_we(wb_cpu_we),
                 .wb_sel(wb_cpu_sel),
                 .wb_dat(wb_cpu_dat),
                 .wb_cti(wb_cpu_cti),
                 .wb_bte(wb_cpu_bte),
-                .wb_ack(wb_cpu_led_ack),
-                .wb_rty(wb_cpu_led_rty),
-                .wb_err(wb_cpu_led_err),
-                .wb_rdt(wb_cpu_led_rdt)
+                .wb_ack(wb_cpu_input_ack),
+                .wb_rty(wb_cpu_input_rty),
+                .wb_err(wb_cpu_input_err),
+                .wb_rdt(wb_cpu_input_rdt)
             );
+
+            wire _unused_input = &{input_pmod};
         end
     endgenerate
 
     generate
-        if (ENABLE_VGA_DEVICE) begin
+        if (ENABLE_AUDIO_DEVICE) begin: audio_device
+            audio_device #(.ADDR_WIDTH(3), .COUNTER_WIDTH(18)) audio_device(
+                .clk(clk),
+                .rst(rst),
+
+                .wb_cyc(wb_cpu_cyc),
+                .wb_stb(wb_cpu_audio_stb),
+                .wb_adr(wb_cpu_adr[2:0]),
+                .wb_we(wb_cpu_we),
+                .wb_sel(wb_cpu_sel),
+                .wb_dat(wb_cpu_dat),
+                .wb_cti(wb_cpu_cti),
+                .wb_bte(wb_cpu_bte),
+                .wb_ack(wb_cpu_audio_ack),
+                .wb_rty(wb_cpu_audio_rty),
+                .wb_err(wb_cpu_audio_err),
+                .wb_rdt(wb_cpu_audio_rdt),
+
+                .audio_out(audio_out)
+            );
+        end else begin: no_audio_device
+            dummy_device #(.ADDR_WIDTH(3)) audio_device(
+                .clk(clk),
+                .rst(rst),
+
+                .wb_cyc(wb_cpu_cyc),
+                .wb_stb(wb_cpu_audio_stb),
+                .wb_adr(wb_cpu_adr[2:0]),
+                .wb_we(wb_cpu_we),
+                .wb_sel(wb_cpu_sel),
+                .wb_dat(wb_cpu_dat),
+                .wb_cti(wb_cpu_cti),
+                .wb_bte(wb_cpu_bte),
+                .wb_ack(wb_cpu_audio_ack),
+                .wb_rty(wb_cpu_audio_rty),
+                .wb_err(wb_cpu_audio_err),
+                .wb_rdt(wb_cpu_audio_rdt)
+            );
+
+            assign audio_out = 1'b1;
+        end
+    endgenerate
+
+    generate
+        if (ENABLE_VGA_DEVICE) begin: vga_device
             wire vgaconfig_enabled;
             wire [24:0] vgaconfig_addr;
 
@@ -368,7 +429,7 @@ module soc
                 .vga_green(vga_green),
                 .vga_blue(vga_blue)
             );
-        end else begin
+        end else begin: no_vga_device
             assign wb_mem_cyc = wb_cpu_cyc;
             assign wb_mem_stb = wb_cpu_mem_stb;
             assign wb_mem_adr = wb_cpu_adr[24:0];

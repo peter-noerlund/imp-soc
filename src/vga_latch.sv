@@ -27,6 +27,8 @@ module vga_latch
             data = data_in;
         end
     end
+
+    wire _unused = clk;
 `endif
 endmodule
 

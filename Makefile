@@ -1,7 +1,9 @@
 VERILOG_SOURCES=\
+	src/audio_device.sv \
 	src/clock_device.sv \
 	src/cpu.sv \
 	src/dummy_device.sv \
+	src/input_device.sv \
 	src/led_device.sv \
 	src/memory_device.sv \
 	src/register_file.sv \
@@ -20,7 +22,7 @@ VERILOG_SOURCES=\
 	src/soc.sv \
 	src/tt_um_pchri03_imp_soc.v \
 	src/vga_device.sv \
-    src/vga_latch.sv \
+	src/vga_latch.sv \
 	src/vga_memory.sv \
 	src/vga_renderer.sv \
 	src/vga_timing.sv \
@@ -36,7 +38,7 @@ pico_ice/pico_ice_pll.v:
 	icepll -q -i 48 -o 25.175 -p -m -f $@
 
 pico_ice/pico_ice.json: $(VERILOG_SOURCES) pico_ice/pico_ice_top.sv pico_ice/pico_ice_pll.v
-	yosys -q -p "synth_ice40 -device u -top pico_ice_top -json $@" -DFPGA -DPICO_ICE -l pico_ice/pico_ice.log $^
+	yosys -q -p "synth_ice40 -device u -top pico_ice_top -dff -retime -noabc9 -abc2 -json $@" -DFPGA -DPICO_ICE -l pico_ice/pico_ice.log $^
 
 pico_ice/pico_ice.asc: pico_ice/pico_ice.pcf pico_ice/pico_ice.json
 	nextpnr-ice40 -q --up5k --package sg48 --freq 25.175 --asc $@ --json pico_ice/pico_ice.json --pcf pico_ice/pico_ice.pcf

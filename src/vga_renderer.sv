@@ -102,8 +102,8 @@ module vga_renderer
     assign chunk_idx = h_pos[CHUNK_IDX_WIDTH + GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH];
 
     assign group = chunk[group_idx * 3 + 2 -: 3];
-    assign color1 = chunk[23:18];
-    assign color2 = chunk[17:12];
+    assign color2 = chunk[23:18];
+    assign color1 = chunk[17:12];
 
     assign pixel0 = pixels[5:0];
     assign pixel1 = pixels[11:6];

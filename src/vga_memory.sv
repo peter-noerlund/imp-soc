@@ -127,16 +127,14 @@ module vga_memory
     // Buffer
     always_ff @ (posedge clk) begin
         if (!rst && ack) begin
-            // Byte layout is 00rrggbb 00RRGGBB 0bbb0aaa 0ddd0ccc whish translates to 0ddd0ccc_0bbb0aaa_00RRGGBB_00rrggbb
-            // VGA renderer expects rrggbb_RRGGBB_ddd_ccc_bbb_aaa
-            // TODO - Should the hardware convert 4 bits to 3 bit?
+            // In memory chunks are stored as 32-bit integers aligned to 4 bits:
             buffer <= {
-                wb_rdt[5:0],    // color 1
-                wb_rdt[13:8],   // color 2
-                wb_rdt[30:28],  // pixel group 4 (pixel 7 and 8)
-                wb_rdt[26:24],  // pixel group 3 (pixel 5 and 6)
-                wb_rdt[22:20],  // pixel group 2 (pixel 3 and 4)
-                wb_rdt[18:16]   // pixel group 1 (pixel 1 and 2)
+                wb_rdt[29:24],  // color 2
+                wb_rdt[21:16],  // color 1
+                wb_rdt[14:12],  // pixel group 4 (pixel 7 and 8)
+                wb_rdt[10:8],   // pixel group 3 (pixel 5 and 6)
+                wb_rdt[6:4],    // pixel group 2 (pixel 3 and 4)
+                wb_rdt[2:0]     // pixel group 1 (pixel 1 and 2)
             };
         end
     end
