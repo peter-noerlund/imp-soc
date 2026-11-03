@@ -21,14 +21,14 @@ async def verify_frame(dut, ram: list, offset: int, frame_info: str):
             vram_value = int(dut.vgactrl_memory.value[word * 24 + 23 : word * 24])
             psram_value = ram[offset + line * 16 + word]
 
-            c1 = psram_value & 0x3F
-            c2 = (psram_value >> 8) & 0x3F
-            g0 = (psram_value >> 16) & 0x07
-            g1 = (psram_value >> 20) & 0x07
-            g2 = (psram_value >> 24) & 0x07
-            g3 = (psram_value >> 28) & 0x07
+            c2 = (psram_value >> 24) & 0x3F
+            c1 = (psram_value >> 16) & 0x3F
+            g3 = (psram_value >> 12) & 0x07
+            g2 = (psram_value >> 8) & 0x07
+            g1 = (psram_value >> 4) & 0x07
+            g0 = psram_value & 0x07
 
-            expeced_vram_value = (c1 << 18) | (c2 << 12) | (g3 << 9) | (g2 << 6) | (g1 << 3) | g0;
+            expeced_vram_value = (c2 << 18) | (c1 << 12) | (g3 << 9) | (g2 << 6) | (g1 << 3) | g0;
 
             assert vram_value == expeced_vram_value, f"Video memory is correct at {frame_info} (address 0x{offset * 4 + 0x01000000:08X}), line {line}, word {word} (0x{vram_value:08X} == 0x{expeced_vram_value:08X}, psram = 0x{psram_value:08X}, c1={c1:02X}, c2={c2:02X}, g0={g0}, g1={g1}, g2={g2}, g3={g3})"
 
@@ -45,11 +45,8 @@ def encode(c1: int, c2: int, pixels: list) -> int:
         [2, 2]
     ]
 
-    data = []
-    data.append(c1 & 0x3F)
-    data.append(c2 & 0x3F)
+    chunk = ((c1 & 0x3F) << 16) | ((c2 & 0x3F) << 24)
     for i in range(2):
-        b = 0
         for j in range(2):
             p0 = pixels[i * 4 + j * 2]
             p1 = pixels[i * 4 + j * 2 + 1]
@@ -61,11 +58,10 @@ def encode(c1: int, c2: int, pixels: list) -> int:
                     break
             if val == -1:
                 raise Exception(f"Invalid pixel pattern [{p0}, {p1}]")
-            
-            b |= val << (i * 4)
-        data.append(b)
-    
-    return int.from_bytes(bytes(data), "little")
+
+            chunk |= val << (i * 4)
+
+    return chunk
 
 
 def encode_swipe(c1: int, c2: int) -> list:
@@ -159,14 +155,13 @@ async def test_vga_memory(dut):
     flash = []
     ram = []
 
-    # Byte pattern in PSRAM is 00rrggbb 00RRGGBB 0ddd0ccc 0bbb0aaa which 
-    # Word pattern in PSRAM is 0bbb0aaa_0ddd0ccc_00RRGGBB_00rrggbb
+    # Word in PSRAM is 00rrggbb_00RRGGBB_0ddd_0ccc_0bbb_0aaa
     # Pattern in VRAM is rrggbb_RRGGBB_ddd_ccc_bbb_aaa
 
     # First frame is all 1's
     for line in range(96):
         for word in range(16):
-            ram.append(0x77773F3F) # all the ignored bits are 0
+            ram.append(0x3F3F7777) # all the ignored bits are 0
     # Pad
     for i in range(128 - 96):
         for word in range(16):
@@ -175,7 +170,7 @@ async def test_vga_memory(dut):
     # Second frame is all 0's
     for line in range(96):
         for word in range(16):
-            ram.append(0x8888C0C0) # all the ignored bits are 1
+            ram.append(0xC0C08888) # all the ignored bits are 1
     # Pad
     for i in range(128 - 96):
         for word in range(16):

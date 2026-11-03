@@ -5,7 +5,7 @@ from cocotb.triggers import ClockCycles
 from cocotb.types import Logic
 
 
-async def rf_read_write(dut, rreg0: int, rreg1: int, wreg0: int = 0, wvalue0: int = 0):
+async def rf_read_write(dut, rreg0: int, rreg1: int, wreg0: int = 0, wvalue0: int = 0, wreg1: int = 0, wvalue1: int = 0):
     dut.rf_rreq.value = 1
     dut.rf_wreq.value = 0
     
@@ -14,6 +14,8 @@ async def rf_read_write(dut, rreg0: int, rreg1: int, wreg0: int = 0, wvalue0: in
     dut.rf_rreq.value = 0
     dut.rf_wen0.value = 1 if wreg0 != 0 else 0
     dut.rf_wreg0.value = wreg0
+    dut.rf_wen1.value = 1 if wreg0 != 0 else 0
+    dut.rf_wreg1.value = wreg1
     dut.rf_rreg0.value = rreg0
     dut.rf_rreg1.value = rreg1
 
@@ -28,7 +30,9 @@ async def rf_read_write(dut, rreg0: int, rreg1: int, wreg0: int = 0, wvalue0: in
     rvalue1 = 0
     for i in range(32):
         dut.rf_wdata0.value = wvalue0 & 1
+        dut.rf_wdata1.value = wvalue1 & 1
         wvalue0 >>= 1
+        wvalue1 >>= 1
         await ClockCycles(dut.clk, 1)
         if dut.rf_rdata0.value != Logic('X'):
             rvalue0 |= int(dut.rf_rdata0.value) << i
@@ -36,15 +40,21 @@ async def rf_read_write(dut, rreg0: int, rreg1: int, wreg0: int = 0, wvalue0: in
             rvalue1 |= int(dut.rf_rdata1.value) << i
 
     dut.rf_rreg0.value = 0
+
     dut.rf_rreg1.value = 0
+
     dut.rf_wen0.value = 0
     dut.rf_wreg0.value = 0
     dut.rf_wdata0.value = 0
 
+    dut.rf_wen1.value = 0
+    dut.rf_wreg1.value = 0
+    dut.rf_wdata1.value = 0
+
     return (rvalue0, rvalue1)
 
 
-async def rf_write(dut, wreg0: int, wvalue0: int):
+async def rf_write(dut, wreg0: int, wvalue0: int, wreg1: int = 0, wvalue1: int = 0):
     dut.rf_rreq.value = 0
     dut.rf_wreq.value = 1
 
@@ -55,10 +65,16 @@ async def rf_write(dut, wreg0: int, wvalue0: int):
     dut.rf_wreq.value = 0
     dut.rf_rreg0.value = 0
     dut.rf_rreg1.value = 0
+
     dut.rf_wen0.value = 1
     dut.rf_wreg0.value = wreg0
     dut.rf_wdata0.value = wvalue0 & 1
     wvalue0 >>= 1
+
+    dut.rf_wen1.value = 1 if wreg1 != 0 else 0
+    dut.rf_wreg1.value = wreg1
+    dut.rf_wdata1.value = wvalue1 & 1
+    wvalue1 >>= 1
 
     for i in range(31):
         await ClockCycles(dut.clk, 1)
@@ -66,12 +82,18 @@ async def rf_write(dut, wreg0: int, wvalue0: int):
         dut.rf_wdata0.value = wvalue0 & 1
         wvalue0 >>= 1
 
+        dut.rf_wdata1.value = wvalue1 & 1
+        wvalue1 >>= 1
+
     await ClockCycles(dut.clk, 1)
 
     dut.rf_wreq.value = 0
     dut.rf_wen0.value = 0
     dut.rf_wreg0.value = 0
     dut.rf_wdata0.value = 0
+    dut.rf_wen1.value = 0
+    dut.rf_wreg1.value = 0
+    dut.rf_wdata1.value = 0
 
 @cocotb.test()
 async def test_read_write(dut):
@@ -156,4 +178,41 @@ async def test_write_only(dut):
 
         await rf_write(dut, reg, 0)
 
+
+@cocotb.test()
+async def test_csr(dut):
+    clock = Clock(dut.clk, 15.384, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    dut.rst.value = 1
+
+    await ClockCycles(dut.clk, 10)
+    dut.rst.value = 0
+    await ClockCycles(dut.clk, 10)
+
+    reg_count = 16
+
+    for reg in range(1, reg_count):
+        await rf_write(dut, reg, 0)
+
+    for reg in range(reg_count):
+        (value0, value1) = await rf_read_write(dut, reg, 33)
+        assert value0 == 0
+        assert value1 == 4
+        
+        (value0, value1) = await rf_read_write(dut, reg, 34)
+        assert value0 == 0
+        assert value1 == 0
+
+    await rf_write(dut, 0, 0, 32, 0xBEEFDEAD)
+    await rf_write(dut, 0, 0, 34, 0xDEADBEEF)
+
+    for reg in range(reg_count):
+        (value0, value1) = await rf_read_write(dut, reg, 33)
+        assert value0 == 0
+        assert value1 == 4
+        
+        (value0, value1) = await rf_read_write(dut, reg, 34)
+        assert value0 == 0
+        assert value1 == 0xDEADBEEF
 

@@ -7,13 +7,16 @@ TOPLEVEL_LANG = verilog
 # List of Verilog source files.
 VERILOG_SOURCES =  \
 	$(CURDIR)/../../src/soc.sv \
+	$(CURDIR)/../../src/audio_device.sv \
 	$(CURDIR)/../../src/cpu.sv \
 	$(CURDIR)/../../src/clock_device.sv \
 	$(CURDIR)/../../src/dummy_device.sv \
+	$(CURDIR)/../../src/input_device.sv \
 	$(CURDIR)/../../src/memory_device.sv \
 	$(CURDIR)/../../src/register_file.sv \
+	$(CURDIR)/../../src/register_file_1.sv \
+	$(CURDIR)/../../src/register_file_4.sv \
 	$(CURDIR)/../../src/vga_device.sv \
-	$(CURDIR)/../../src/vga_latch.sv \
 	$(CURDIR)/../../src/vga_memory.sv \
 	$(CURDIR)/../../src/vga_renderer.sv \
 	$(CURDIR)/../../src/vga_timing.sv \

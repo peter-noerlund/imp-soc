@@ -9,9 +9,12 @@ TOPLEVEL_LANG = verilog
 VERILOG_SOURCES =  \
 	$(CURDIR)/../../src/cpu.sv \
     $(CURDIR)/../../src/register_file.sv \
+    $(CURDIR)/../../src/register_file_1.sv \
+    $(CURDIR)/../../src/register_file_4.sv \
     $(CURDIR)/../../src/serv/rtl/serv_alu.v \
     $(CURDIR)/../../src/serv/rtl/serv_bufreg.v \
     $(CURDIR)/../../src/serv/rtl/serv_bufreg2.v \
+    $(CURDIR)/../../src/serv/rtl/serv_csr.v \
     $(CURDIR)/../../src/serv/rtl/serv_ctrl.v \
     $(CURDIR)/../../src/serv/rtl/serv_decode.v \
     $(CURDIR)/../../src/serv/rtl/serv_debug.v \
