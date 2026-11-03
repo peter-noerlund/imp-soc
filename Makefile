@@ -4,7 +4,6 @@ VERILOG_SOURCES=\
 	src/cpu.sv \
 	src/dummy_device.sv \
 	src/input_device.sv \
-	src/led_device.sv \
 	src/memory_device.sv \
 	src/register_file.sv \
 	src/serv/rtl/serv_alu.v \
@@ -22,7 +21,6 @@ VERILOG_SOURCES=\
 	src/soc.sv \
 	src/tt_um_pchri03_imp_soc.v \
 	src/vga_device.sv \
-	src/vga_latch.sv \
 	src/vga_memory.sv \
 	src/vga_renderer.sv \
 	src/vga_timing.sv \

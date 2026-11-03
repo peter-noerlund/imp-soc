@@ -25,11 +25,11 @@
     "ENABLE_INPUT_DEVICE=1",
     "ENABLE_AUDIO_DEVICE=1",
     "GAMEPAD_COUNT=1",
-    "RAW_INPUT=1"
+    "ENABLE_RAW_INPUT=0"
   ],
 
   "//": "Placement",
-  "PL_TARGET_DENSITY_PCT": 70,
+  "PL_TARGET_DENSITY_PCT": 50,
 
   "//": "Global Routing",
   "GRT_ADJUSTMENT": 0.15,

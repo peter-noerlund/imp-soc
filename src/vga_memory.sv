@@ -68,7 +68,7 @@ module vga_memory
     wire ack;
     wire last_word;
 
-    wire [WORD_COUNT * WORD_SIZE - 1 : 0] memory;
+    bit [WORD_COUNT * WORD_SIZE - 1 : 0] memory;
 
     genvar i;
 
@@ -149,12 +149,25 @@ module vga_memory
         latch1 <= latch0;
     end
 
-    // Memory
+`ifdef FPGA
     generate
-        for (i = 0; i != WORD_COUNT; i++) begin: mem_n
-            vga_latch #(.WIDTH(WORD_SIZE)) mem(.clk(clk), .gate(latch1 && word_idx == WORD_WIDTH'(i)), .data_in(buffer), .data_out(memory[i * WORD_SIZE + WORD_SIZE - 1 -: WORD_SIZE]));
+        for (i = 0; i != WORD_COUNT; i++) begin: gen_memory
+            always_ff @ (posedge clk) begin
+                if (latch1 && word_idx == WORD_WIDTH'(i)) begin
+                    memory[i * WORD_SIZE + WORD_SIZE - 1 -: WORD_SIZE] <= buffer;
+                end
+            end
         end
     endgenerate
-
-
+`else // FPGA
+    generate
+        for (i = 0; i != WORD_COUNT; i++) begin: gen_memory
+            always_latch begin
+                if (latch1 && word_idx == WORD_WIDTH'(i)) begin
+                    memory[i * WORD_SIZE + WORD_SIZE - 1 -: WORD_SIZE] = buffer;
+                end
+            end
+        end
+    endgenerate
+`endif // FPGA
 endmodule

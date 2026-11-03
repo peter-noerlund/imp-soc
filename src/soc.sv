@@ -7,7 +7,7 @@ module soc
         parameter [0:0] ENABLE_AUDIO_DEVICE=1,
         parameter [0:0] ENABLE_VGA_DEVICE=1,
         parameter [0:0] ENABLE_RAW_INPUT=1,
-        parameter int GAMEPAD_COUNT=2
+        parameter [1:0] GAMEPAD_COUNT=2
     )
     (
         input wire clk,
@@ -179,7 +179,7 @@ module soc
 
     generate
         if (ENABLE_CLOCK_DEVICE) begin: clock_device
-            clock_device #(.ADDR_WIDTH(3)) clock_device(
+            clock_device #(.ADDR_WIDTH(3), .CLOCK_WIDTH(26)) clock_device(
                 .clk(clk),
                 .rst(rst),
 

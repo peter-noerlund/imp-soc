@@ -4,8 +4,8 @@ module input_device
     #(
         parameter int ADDR_WIDTH=32,
         parameter int DATA_WIDTH=32,
-        parameter int GAMEPAD_COUNT=2,
-        parameter [0:0] ENABLE_RAW_INPUT=1
+        parameter [1:0] GAMEPAD_COUNT=2,
+        parameter [0:0] ENABLE_RAW_INPUT=0
     )
     (
         input wire clk,
@@ -14,13 +14,11 @@ module input_device
         input wire wb_cyc,
         input wire wb_stb,
         input wire [ADDR_WIDTH - 1 : 0] wb_adr,
-        /* verilator lint_off UNUSEDSIGNAL */
         input wire wb_we,
         input wire [(DATA_WIDTH / 8) - 1 : 0] wb_sel,
         input wire [DATA_WIDTH - 1 : 0] wb_dat,
         input wire [2:0] wb_cti,
         input wire [1:0] wb_bte,
-        /* verilator lint_on UNUSEDSIGNAL */
         output wire wb_ack,
         output wire wb_rty,
         output wire wb_err,
@@ -40,14 +38,8 @@ module input_device
     assign wb_rdt = {raw_state, gamepad_state};
 
     generate
-        if (ENABLE_RAW_INPUT) begin: raw_input
-            bit [7:0] raw_state_reg;
-
-            assign raw_state = raw_state_reg;
-
-            always_ff @ (posedge clk) begin
-                raw_state_reg <= input_pmod;
-            end
+        if (ENABLE_RAW_INPUT) begin: raw_input1
+            assign raw_state = input_pmod;
         end else begin: no_raw_input
             assign raw_state = 8'b00000000;
         end
@@ -59,8 +51,8 @@ module input_device
         end else begin: gamepad
             localparam int STATE_WIDTH = GAMEPAD_COUNT * 12;
 
-            bit [STATE_WIDTH - 1 : 0] gamepad_state_reg;
             bit [STATE_WIDTH - 1 : 0] gamepad_shift;
+            bit [STATE_WIDTH - 1 : 0] gamepad_mem;
 
             bit prev_gamepad_clk;
             bit prev_gamepad_latch;
@@ -69,39 +61,55 @@ module input_device
             wire gamepad_clk;
             wire gamepad_data;
 
+            bit latch;
+
             assign gamepad_latch = input_pmod[4];
             assign gamepad_clk = input_pmod[5];
             assign gamepad_data = input_pmod[6];
 
             if (GAMEPAD_COUNT == 1) begin: one_gamepad
-                assign gamepad_state = {gamepad_state_reg, 12'hFFF};
+                assign gamepad_state = {gamepad_mem, 12'hFFF};
             end else begin: two_gamepads
-                assign gamepad_state = gamepad_state_reg;
+                assign gamepad_state = gamepad_mem;
             end
 
             always_ff @ (posedge clk) begin
                 if (rst) begin
-                    gamepad_state_reg <= STATE_WIDTH'(1);
                     gamepad_shift <= STATE_WIDTH'(1);
                     prev_gamepad_clk <= 1'b0;
                     prev_gamepad_latch <= 1'b0;
+                    latch <= 1'b0;
                 end else begin
                     prev_gamepad_clk <= gamepad_clk;
                     prev_gamepad_latch <= gamepad_latch;
 
-                    if (gamepad_latch && !prev_gamepad_latch) begin
-                        gamepad_state_reg <= gamepad_shift;
-                    end
+                    latch <= gamepad_latch && !prev_gamepad_latch;
 
                     if (gamepad_clk && !prev_gamepad_clk) begin
                         gamepad_shift <= {gamepad_shift[STATE_WIDTH - 2 : 0], gamepad_data};
                     end
                 end
             end
+
+`ifdef FPGA
+            always_ff @ (posedge clk) begin
+                if (latch) begin
+                    gamepad_mem <= gamepad_shift;
+                end
+            end
+`else // FPGA
+            always_latch begin
+                if (latch) begin
+                    gamepad_mem = gamepad_shift;
+                end
+            end
+`endif // FPGA
         end
     endgenerate
 
     always_ff @ (posedge clk) begin
         ack <= ~rst & wb_cyc & wb_stb & ~ack;
     end
+
+    wire _unused = &{wb_adr, wb_we, wb_sel, wb_dat, wb_cti, wb_bte};
 endmodule
