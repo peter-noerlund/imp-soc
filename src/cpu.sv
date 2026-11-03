@@ -20,8 +20,10 @@ module cpu
         input wire wb_ack,          //! Wishbone signal ACK_I
         input wire wb_err,          //! Wishbone signal ERR_I
         input wire wb_rty,          //! Wishbone signal RTY_I
-        input wire [31:0] wb_rdt    //! Wishbone signal DAT_I
+        input wire [31:0] wb_rdt,   //! Wishbone signal DAT_I
         //! @end
+
+        input wire irq
     );
 
     localparam int B = W - 1;
@@ -30,13 +32,14 @@ module cpu
     wire rf_rreq;
     wire rf_wreq;
     wire rf_ready;
-    /* verilator lint_off UNUSEDSIGNAL */
-    wire [4:0] rf_wreg0;
-    wire [4:0] rf_rreg0;
-    wire [4:0] rf_rreg1;
-    /* verilator lint_on UNUSEDSIGNAL */
+    wire [5:0] rf_wreg0;
+    wire [5:0] rf_wreg1;
+    wire [5:0] rf_rreg0;
+    wire [5:0] rf_rreg1;
     wire rf_wen0;
+    wire rf_wen1;
     wire [B:0] rf_wdata0;
+    wire [B:0] rf_wdata1;
     wire [B:0] rf_rdata0;
     wire [B:0] rf_rdata1;
 
@@ -60,10 +63,10 @@ module cpu
     assign wb_cyc = wb_stb;
     
     /* verilator lint_off PINMISSING */
-    serv_top #(.WITH_CSR(0), .W(W), .RESET_PC(32'h00000000)) serv(
+    serv_top #(.WITH_CSR(1), .W(W), .RESET_PC(32'h00000000)) serv(
         .clk(clk),
         .i_rst(rst),
-        .i_timer_irq(1'b0),
+        .i_timer_irq(irq),
 
         // Register File
         .o_rf_rreq(rf_rreq),
@@ -72,6 +75,9 @@ module cpu
         .o_wreg0(rf_wreg0),
         .o_wen0(rf_wen0),
         .o_wdata0(rf_wdata0),
+        .o_wreg1(rf_wreg1),
+        .o_wen1(rf_wen1),
+        .o_wdata1(rf_wdata1),
         .o_rreg0(rf_rreg0),
         .o_rreg1(rf_rreg1),
         .i_rdata0(rf_rdata0),
@@ -106,11 +112,14 @@ module cpu
         .rf_wreq(rf_wreq),
         .rf_ready(rf_ready),
         .rf_wen0(rf_wen0),
-        .rf_wreg0(rf_wreg0[3:0]),
+        .rf_wreg0(rf_wreg0),
         .rf_wdata0(rf_wdata0),
-        .rf_rreg0(rf_rreg0[3:0]),
+        .rf_wen1(rf_wen1),
+        .rf_wreg1(rf_wreg1),
+        .rf_wdata1(rf_wdata1),
+        .rf_rreg0(rf_rreg0),
         .rf_rdata0(rf_rdata0),
-        .rf_rreg1(rf_rreg1[3:0]),
+        .rf_rreg1(rf_rreg1),
         .rf_rdata1(rf_rdata1)
     );
 

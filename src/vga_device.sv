@@ -3,7 +3,7 @@
 
 module vga_device
     #(
-        parameter int ADDR_WIDTH=32,
+        parameter int ADDR_WIDTH=31,
         parameter int DATA_WIDTH=32,
         parameter int ALIGN_WIDTH=14
     )
@@ -53,14 +53,14 @@ module vga_device
             vgaconfig_addr_mem <= wb_dat[ADDR_WIDTH - 1 : ALIGN_WIDTH];
         end
     end
-`else
+`else // FPGA
     always_latch begin
         if (wreq) begin
             vgaconfig_enabled_mem = wb_dat[DATA_WIDTH - 1];
             vgaconfig_addr_mem = wb_dat[ADDR_WIDTH - 1 : ALIGN_WIDTH];
         end
     end
-`endif
+`endif // FPGA
 
     wire _unused = &{wb_adr, wb_sel, wb_cti, wb_bte};
 endmodule

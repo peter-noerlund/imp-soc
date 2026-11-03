@@ -4,17 +4,24 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 from cocotb.types import Logic
 
+MASK = 0xF
+SHIFT = 4
+LOOPS = 8
+#ASK = 0x1
+#HIFT = 1
+#OOPS = 32
 
-async def rf_read_write(dut, rreg0: int, rreg1: int, wreg0: int = 0, wvalue0: int = 0, wreg1: int = 0, wvalue1: int = 0):
+
+async def rf_read_write(dut, rreg0: int, rreg1: int = 0, wreg0: int = 0, wvalue0: int = 0, wreg1: int = 0, wvalue1: int = 0):
     dut.rf_rreq.value = 1
     dut.rf_wreq.value = 0
     
     await ClockCycles(dut.clk, 1)
 
     dut.rf_rreq.value = 0
-    dut.rf_wen0.value = 1 if wreg0 != 0 else 0
+    dut.rf_wen0.value = 0 if wreg0 == 0 else 1
     dut.rf_wreg0.value = wreg0
-    dut.rf_wen1.value = 1 if wreg0 != 0 else 0
+    dut.rf_wen1.value = 0 if wreg1 == 0 else 1
     dut.rf_wreg1.value = wreg1
     dut.rf_rreg0.value = rreg0
     dut.rf_rreg1.value = rreg1
@@ -28,16 +35,20 @@ async def rf_read_write(dut, rreg0: int, rreg1: int, wreg0: int = 0, wvalue0: in
 
     rvalue0 = 0
     rvalue1 = 0
-    for i in range(32):
-        dut.rf_wdata0.value = wvalue0 & 1
-        dut.rf_wdata1.value = wvalue1 & 1
-        wvalue0 >>= 1
-        wvalue1 >>= 1
+    for i in range(LOOPS):
+        dut.rf_wdata0.value = wvalue0 & MASK
+        dut.rf_wdata1.value = wvalue1 & MASK
+        wvalue0 >>= SHIFT
+        wvalue1 >>= SHIFT
         await ClockCycles(dut.clk, 1)
-        if dut.rf_rdata0.value != Logic('X'):
-            rvalue0 |= int(dut.rf_rdata0.value) << i
-        if dut.rf_rdata1.value != Logic('X'):
-            rvalue1 |= int(dut.rf_rdata1.value) << i
+        try:
+            rvalue0 |= int(dut.rf_rdata0.value) << (i * SHIFT)
+        except:
+            pass
+        try:
+            rvalue1 |= int(dut.rf_rdata1.value) << (i * SHIFT)
+        except:
+            pass
 
     dut.rf_rreg0.value = 0
 
@@ -68,22 +79,22 @@ async def rf_write(dut, wreg0: int, wvalue0: int, wreg1: int = 0, wvalue1: int =
 
     dut.rf_wen0.value = 1
     dut.rf_wreg0.value = wreg0
-    dut.rf_wdata0.value = wvalue0 & 1
-    wvalue0 >>= 1
+    dut.rf_wdata0.value = wvalue0 & MASK
+    wvalue0 >>= SHIFT
 
-    dut.rf_wen1.value = 1 if wreg1 != 0 else 0
+    dut.rf_wen1.value = 0 if wreg1 == 0 else 1
     dut.rf_wreg1.value = wreg1
-    dut.rf_wdata1.value = wvalue1 & 1
-    wvalue1 >>= 1
+    dut.rf_wdata1.value = wvalue1 & MASK
+    wvalue1 >>= SHIFT
 
-    for i in range(31):
+    for i in range(LOOPS - 1):
         await ClockCycles(dut.clk, 1)
 
-        dut.rf_wdata0.value = wvalue0 & 1
-        wvalue0 >>= 1
+        dut.rf_wdata0.value = wvalue0 & MASK
+        wvalue0 >>= SHIFT
 
-        dut.rf_wdata1.value = wvalue1 & 1
-        wvalue1 >>= 1
+        dut.rf_wdata1.value = wvalue1 & MASK
+        wvalue1 >>= SHIFT
 
     await ClockCycles(dut.clk, 1)
 
@@ -109,7 +120,7 @@ async def test_read_write(dut):
     reg_count = 16
 
     for reg in range(1, reg_count):
-        await rf_read_write(dut, reg, reg, reg, 0)
+        await rf_write(dut, reg, 0)
 
     for reg in range(reg_count):
         (value0, value1) = await rf_read_write(dut, reg, reg)
@@ -194,6 +205,8 @@ async def test_csr(dut):
 
     for reg in range(1, reg_count):
         await rf_write(dut, reg, 0)
+
+    await rf_write(dut, 0, 0, 33, 0)
 
     for reg in range(reg_count):
         (value0, value1) = await rf_read_write(dut, reg, 33)

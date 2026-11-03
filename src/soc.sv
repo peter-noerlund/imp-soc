@@ -110,7 +110,9 @@ module soc
         .wb_ack(wb_cpu_ack),
         .wb_rty(wb_cpu_rty),
         .wb_err(wb_cpu_err),
-        .wb_rdt(wb_cpu_rdt)
+        .wb_rdt(wb_cpu_rdt),
+
+        .irq(1'b0)
     );
 
     wb_interconnect #(.ADDR_WIDTH(26)) wb_interconnect(
