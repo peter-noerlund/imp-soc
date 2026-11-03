@@ -13,13 +13,28 @@
 
   "//": "PL_TARGET_DENSITY_PCT - You can increase this if Global Placement fails with error GPL-0302.",
   "//": "Users have reported that values up to 80 worked well for them.",
+
+  "//": "Synthesis",
   "SYNTH_STRATEGY": "AREA 2",
-  "SYNTH_MAX_FANOUT": 20,
-  "PL_TARGET_DENSITY_PCT": 50,
-  "FP_CORE_UTIL": 50,
+  "SYNTH_MAX_FANOUT": 10,
+  "SYNTH_ABC_BUFFERING": false,
+  "SYNTH_SIZING": false,
+  "SYNTH_AUTONAME": true,
+  "SYNTH_PARAMETERS": [
+    "ENABLE_CLOCK_DEVICE=1",
+    "ENABLE_INPUT_DEVICE=1",
+    "ENABLE_AUDIO_DEVICE=1",
+    "GAMEPAD_COUNT=1",
+    "RAW_INPUT=1"
+  ],
+
+  "//": "Placement",
+  "PL_TARGET_DENSITY_PCT": 70,
+
+  "//": "Global Routing",
+  "GRT_ADJUSTMENT": 0.15,
 
   "//": "Keep hierarchy, so we can estimate area per module",
-  "SYNTH_AUTONAME": true,
 
   "//": "CLOCK_PERIOD - Increase this in case you are getting setup time violations.",
   "//": "The value is in nanoseconds, so 20ns == 50MHz.",
