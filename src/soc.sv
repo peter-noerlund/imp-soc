@@ -95,7 +95,7 @@ module soc
     wire wb_mem_err;
     wire [31:0] wb_mem_rdt;
 
-    cpu cpu(
+    cpu #(.W(1)) cpu(
         .clk(clk),
         .rst(rst),
 

@@ -1,6 +1,9 @@
 `default_nettype none
 
 module cpu
+    #(
+        parameter int W=1
+    )
     (
         input wire clk,
         input wire rst,
@@ -21,6 +24,8 @@ module cpu
         //! @end
     );
 
+    localparam int B = W - 1;
+
     // Register File interface
     wire rf_rreq;
     wire rf_wreq;
@@ -31,9 +36,9 @@ module cpu
     wire [4:0] rf_rreg1;
     /* verilator lint_on UNUSEDSIGNAL */
     wire rf_wen0;
-    wire rf_wdata0;
-    wire rf_rdata0;
-    wire rf_rdata1;
+    wire [B:0] rf_wdata0;
+    wire [B:0] rf_rdata0;
+    wire [B:0] rf_rdata1;
 
     // Instruction bus
     wire ibus_cyc;
@@ -55,7 +60,7 @@ module cpu
     assign wb_cyc = wb_stb;
     
     /* verilator lint_off PINMISSING */
-    serv_top #(.WITH_CSR(0), .RESET_PC(32'h00000000)) serv(
+    serv_top #(.WITH_CSR(0), .W(W), .RESET_PC(32'h00000000)) serv(
         .clk(clk),
         .i_rst(rst),
         .i_timer_irq(1'b0),
@@ -93,7 +98,7 @@ module cpu
     );
     /* verilator lint_on PINMISSING */
    
-    register_file rf(
+    register_file #(.W(W)) rf(
         .clk(clk),
         .rst(rst),
 
