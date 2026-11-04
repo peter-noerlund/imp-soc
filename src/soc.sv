@@ -7,7 +7,8 @@ module soc
         parameter [0:0] ENABLE_AUDIO_DEVICE=1,
         parameter [0:0] ENABLE_VGA_DEVICE=1,
         parameter [0:0] ENABLE_RAW_INPUT=1,
-        parameter [1:0] GAMEPAD_COUNT=2
+        parameter [1:0] GAMEPAD_COUNT=2,
+        parameter W=1
     )
     (
         input wire clk,
@@ -97,7 +98,7 @@ module soc
 
     wire irq;
 
-    cpu #(.W(1)) cpu(
+    cpu #(.W(W)) cpu(
         .clk(clk),
         .rst(rst),
 
