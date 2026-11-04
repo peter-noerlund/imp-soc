@@ -19,6 +19,7 @@ VERILOG_SOURCES=\
 	src/serv/rtl/serv_top.v \
 	src/serv/servile/servile_arbiter.v \
 	src/soc.sv \
+    src/timer_device.sv \
 	src/tt_um_pchri03_imp_soc.v \
 	src/vga_device.sv \
 	src/vga_memory.sv \
