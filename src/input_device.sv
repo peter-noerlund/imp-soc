@@ -91,19 +91,11 @@ module input_device
                 end
             end
 
-`ifdef FPGA
             always_ff @ (posedge clk) begin
                 if (latch) begin
                     gamepad_mem <= gamepad_shift;
                 end
             end
-`else // FPGA
-            always_latch begin
-                if (latch) begin
-                    gamepad_mem = gamepad_shift;
-                end
-            end
-`endif // FPGA
         end
     endgenerate
 
