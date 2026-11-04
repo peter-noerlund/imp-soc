@@ -57,11 +57,11 @@ module register_file
         rreg1_mtvec ? regout_mtvec :
         regout[rreg1];
 
-    assign regout[0] = 4'b0000;         // x0 / zero
+    assign regout[0] = W'(0);           // x0 / zero
     assign regout[1] = regs[0][B:0];    // x1 / ra
     assign regout[2] = regs[1][B:0];    // x2 / sp
-    assign regout[3] = 4'b0000;         // x3 / gp
-    assign regout[4] = 4'b0000;         // x4 / tp
+    assign regout[3] = W'(0);           // x3 / gp
+    assign regout[4] = W'(0);           // x4 / tp
     assign regout[5] = regs[2][B:0];    // x5 / t0
     assign regout[6] = regs[3][B:0];    // x6 / t1
     assign regout[7] = regs[4][B:0];    // x7 / t2
@@ -133,5 +133,5 @@ module register_file
         end
     end
 
-    wire _unused = &{rf_wreg0};
+    wire _unused = &{rf_rreg0[5:4], rf_rreg1[4], rf_wreg0[4], rf_wreg1};
 endmodule
