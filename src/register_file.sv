@@ -50,7 +50,7 @@ module register_file
 				.rf_rdata1(rf_rdata1)
 			);
 		end else if (W == 4) begin: gen_w4
-			register_file_1 impl(
+			register_file_4 impl(
 				.clk(clk),
 				.rst(rst),
 				.rf_rreq(rf_rreq),

@@ -29,6 +29,7 @@ module register_file_4
     logic [31:0] regs [13:0];
     logic active;
     logic [2:0] cnt;
+    logic ready;
     wire [3:0] regout [15:0];
     wire [3:0] regout_meip;
     wire [3:0] regout_mtvec;
