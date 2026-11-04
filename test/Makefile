@@ -1,4 +1,7 @@
-all: clock_device write_aligner memory_device register_file cpu vga_timing vga_memory vga_device soc
+all: audio_device clock_device write_aligner memory_device register_file cpu vga_timing vga_memory vga_device soc
+
+audio_device:
+	$(MAKE) -C audio_device
 
 clock_device:
 	$(MAKE) -C clock_device
@@ -27,4 +30,4 @@ vga_timing:
 write_aligner:
 	$(MAKE) -C write_aligner
 
-.PHONY: clock_device cpu memory_device register_file soc vga_device vga_memory vga_timing
+.PHONY: audio_device clock_device cpu memory_device register_file soc vga_device vga_memory vga_timing
