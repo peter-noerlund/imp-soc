@@ -30,7 +30,6 @@ module audio_device
     bit [COUNTER_WIDTH - 1 : 0] reset_value;
     bit audio;
 
-    bit wreq;
     bit ack;
 
     assign wb_ack = &{wb_cyc, wb_stb, ack};
@@ -61,23 +60,16 @@ module audio_device
     end
 
     always_ff @ (posedge clk) begin
-        wreq <= ~rst & wb_cyc & wb_stb & ~ack & wb_we & ~wreq;
-        ack <= ~rst & wb_cyc & wb_stb & ~ack & (wreq | ~wb_we);
+        ack <= ~rst & wb_cyc & wb_stb & ~ack;
     end
 
-`ifdef FPGA
     always_ff @ (posedge clk) begin
-        if (wreq) begin
+        if (rst) begin
+            reset_value <= COUNTER_WIDTH'(0);
+        end else if (wb_cyc & wb_stb & wb_we & ~ack) begin
             reset_value <= wb_dat[COUNTER_WIDTH - 1 : 0];
         end
     end
-`else
-    always_latch begin
-        if (wreq) begin
-            reset_value = wb_dat[COUNTER_WIDTH - 1 : 0];
-        end
-    end
-`endif
 
     wire _unused = &{wb_adr, wb_sel, wb_cti, wb_bte};
 
