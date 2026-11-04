@@ -4,7 +4,7 @@ module audio_device
     #(
         parameter int ADDR_WIDTH=32,
         parameter int DATA_WIDTH=32,
-        parameter int COUNTER_WIDTH=32
+        parameter int COUNTER_WIDTH=DATA_WIDTH
     )
     (
         input wire clk,
