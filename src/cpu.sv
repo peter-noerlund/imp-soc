@@ -2,7 +2,7 @@
 
 module cpu
     #(
-        parameter int W=1
+        parameter int W=4
     )
     (
         input wire clk,
