@@ -29,6 +29,7 @@ project:
     - serv/rtl/serv_bufreg.v
     - serv/rtl/serv_bufreg2.v
     - serv/rtl/serv_ctrl.v
+    - serv/rtl/serv_csr.v
     - serv/rtl/serv_decode.v
     - serv/rtl/serv_immdec.v
     - serv/rtl/serv_mem_if.v
