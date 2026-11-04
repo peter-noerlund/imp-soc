@@ -21,20 +21,19 @@
   "SYNTH_SIZING": false,
   "SYNTH_AUTONAME": true,
   "SYNTH_PARAMETERS": [
-    "ENABLE_CLOCK_DEVICE=1",
+    "ENABLE_TIMER_DEVICE=1",
     "ENABLE_INPUT_DEVICE=1",
     "ENABLE_AUDIO_DEVICE=1",
     "GAMEPAD_COUNT=1",
-    "ENABLE_RAW_INPUT=0"
+    "ENABLE_RAW_INPUT=0",
+    "W=4"
   ],
 
   "//": "Placement",
   "PL_TARGET_DENSITY_PCT": 50,
 
   "//": "Global Routing",
-  "GRT_ADJUSTMENT": 0.15,
-
-  "//": "Keep hierarchy, so we can estimate area per module",
+  "GRT_ADJUSTMENT": 0.30,
 
   "//": "CLOCK_PERIOD - Increase this in case you are getting setup time violations.",
   "//": "The value is in nanoseconds, so 20ns == 50MHz.",
@@ -42,7 +41,9 @@
 
   "//": "Hold slack margin - Increase them in case you are getting hold violations.",
   "PL_RESIZER_HOLD_SLACK_MARGIN": 0.1,
+  "PL_RESIZER_SETUP_SLACK_MARGIN": 0.05,
   "GRT_RESIZER_HOLD_SLACK_MARGIN": 0.05,
+  "GRT_RESIZER_SETUP_SLACK_MARGIN": 0.025, 
 
   "//": "RUN_LINTER, LINTER_INCLUDE_PDK_MODELS - Disabling the linter is not recommended!",
   "RUN_LINTER": 1,
