@@ -33,7 +33,6 @@ module vga_device
     bit vgaconfig_enabled_mem;
     bit [ADDR_MEM_WIDTH - 1 : 0] vgaconfig_addr_mem;
     bit ack;
-    bit wreq;
     
     assign wb_ack = wb_cyc & wb_stb & ack;
     assign wb_rty = 1'b0;
