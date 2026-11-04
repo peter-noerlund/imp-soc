@@ -15,7 +15,7 @@ module pico_ice_top
         input wire SW2
     );
 
-    localparam [0:0] ENABLE_CLOCK_DEVICE = 1;
+    localparam [0:0] ENABLE_TIMER_DEVICE = 1;
     localparam [0:0] ENABLE_INPUT_DEVICE = 1;
     localparam [0:0] ENABLE_AUDIO_DEVICE = 1;
     localparam [0:0] ENABLE_VGA_DEVICE = 1;
@@ -122,7 +122,7 @@ module pico_ice_top
     );
 
     soc #(
-        .ENABLE_CLOCK_DEVICE(ENABLE_CLOCK_DEVICE),
+        .ENABLE_TIMER_DEVICE(ENABLE_TIMER_DEVICE),
         .ENABLE_INPUT_DEVICE(ENABLE_INPUT_DEVICE),
         .ENABLE_AUDIO_DEVICE(ENABLE_AUDIO_DEVICE),
         .ENABLE_VGA_DEVICE(ENABLE_VGA_DEVICE),

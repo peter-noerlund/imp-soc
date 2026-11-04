@@ -19,7 +19,6 @@ project:
   source_files:
     - tt_um_pchri03_imp_soc.v
     - audio_device.sv
-    - clock_device.sv
     - cpu.sv
     - dummy_device.sv
     - input_device.sv
@@ -38,6 +37,7 @@ project:
     - serv/rtl/serv_top.v
     - serv/servile/servile_arbiter.v
     - soc.sv
+    - timer_device.sv
     - vga_device.sv
     - vga_memory.sv
     - vga_renderer.sv

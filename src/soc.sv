@@ -2,7 +2,7 @@
 
 module soc
     #(
-        parameter [0:0] ENABLE_CLOCK_DEVICE=1,
+        parameter [0:0] ENABLE_TIMER_DEVICE=1,
         parameter [0:0] ENABLE_INPUT_DEVICE=1,
         parameter [0:0] ENABLE_AUDIO_DEVICE=1,
         parameter [0:0] ENABLE_VGA_DEVICE=1,
@@ -54,11 +54,11 @@ module soc
     wire [31:0] wb_cpu_mem_rdt;
 
     // Clock device
-    wire wb_cpu_clock_stb;
-    wire wb_cpu_clock_ack;
-    wire wb_cpu_clock_rty;
-    wire wb_cpu_clock_err;
-    wire [31:0] wb_cpu_clock_rdt;
+    wire wb_cpu_timer_stb;
+    wire wb_cpu_timer_ack;
+    wire wb_cpu_timer_rty;
+    wire wb_cpu_timer_err;
+    wire [31:0] wb_cpu_timer_rdt;
 
     // Input device
     wire wb_cpu_input_stb;
@@ -95,6 +95,8 @@ module soc
     wire wb_mem_err;
     wire [31:0] wb_mem_rdt;
 
+    wire irq;
+
     cpu #(.W(1)) cpu(
         .clk(clk),
         .rst(rst),
@@ -112,7 +114,7 @@ module soc
         .wb_err(wb_cpu_err),
         .wb_rdt(wb_cpu_rdt),
 
-        .irq(1'b0)
+        .irq(irq)
     );
 
     wb_interconnect #(.ADDR_WIDTH(26)) wb_interconnect(
@@ -129,11 +131,11 @@ module soc
         .wb_mem_err(wb_cpu_mem_err),
         .wb_mem_rdt(wb_cpu_mem_rdt),
 
-        .wb_clock_stb(wb_cpu_clock_stb),
-        .wb_clock_ack(wb_cpu_clock_ack),
-        .wb_clock_rty(wb_cpu_clock_rty),
-        .wb_clock_err(wb_cpu_clock_err),
-        .wb_clock_rdt(wb_cpu_clock_rdt),
+        .wb_timer_stb(wb_cpu_timer_stb),
+        .wb_timer_ack(wb_cpu_timer_ack),
+        .wb_timer_rty(wb_cpu_timer_rty),
+        .wb_timer_err(wb_cpu_timer_err),
+        .wb_timer_rdt(wb_cpu_timer_rdt),
 
         .wb_input_stb(wb_cpu_input_stb),
         .wb_input_ack(wb_cpu_input_ack),
@@ -180,42 +182,46 @@ module soc
     );
 
     generate
-        if (ENABLE_CLOCK_DEVICE) begin: clock_device
-            clock_device #(.ADDR_WIDTH(3), .CLOCK_WIDTH(26)) clock_device(
+        if (ENABLE_TIMER_DEVICE) begin: timer_device
+            timer_device #(.ADDR_WIDTH(3), .COUNTER_WIDTH(19)) timer_device(
                 .clk(clk),
                 .rst(rst),
 
                 .wb_cyc(wb_cpu_cyc),
-                .wb_stb(wb_cpu_clock_stb),
+                .wb_stb(wb_cpu_timer_stb),
                 .wb_adr(wb_cpu_adr[2:0]),
                 .wb_we(wb_cpu_we),
                 .wb_sel(wb_cpu_sel),
                 .wb_dat(wb_cpu_dat),
                 .wb_cti(wb_cpu_cti),
                 .wb_bte(wb_cpu_bte),
-                .wb_ack(wb_cpu_clock_ack),
-                .wb_rty(wb_cpu_clock_rty),
-                .wb_err(wb_cpu_clock_err),
-                .wb_rdt(wb_cpu_clock_rdt)
+                .wb_ack(wb_cpu_timer_ack),
+                .wb_rty(wb_cpu_timer_rty),
+                .wb_err(wb_cpu_timer_err),
+                .wb_rdt(wb_cpu_timer_rdt),
+
+                .irq_out(irq)
             );
-        end else begin: no_clock_device
-            dummy_device #(.ADDR_WIDTH(3)) clock_device(
+        end else begin: no_timer_device
+            dummy_device #(.ADDR_WIDTH(3)) timer_device(
                 .clk(clk),
                 .rst(rst),
 
                 .wb_cyc(wb_cpu_cyc),
-                .wb_stb(wb_cpu_clock_stb),
+                .wb_stb(wb_cpu_timer_stb),
                 .wb_adr(wb_cpu_adr[2:0]),
                 .wb_we(wb_cpu_we),
                 .wb_sel(wb_cpu_sel),
                 .wb_dat(wb_cpu_dat),
                 .wb_cti(wb_cpu_cti),
                 .wb_bte(wb_cpu_bte),
-                .wb_ack(wb_cpu_clock_ack),
-                .wb_rty(wb_cpu_clock_rty),
-                .wb_err(wb_cpu_clock_err),
-                .wb_rdt(wb_cpu_clock_rdt)
+                .wb_ack(wb_cpu_timer_ack),
+                .wb_rty(wb_cpu_timer_rty),
+                .wb_err(wb_cpu_timer_err),
+                .wb_rdt(wb_cpu_timer_rdt)
             );
+
+            assign irq = 1'b0;
         end
     endgenerate
 

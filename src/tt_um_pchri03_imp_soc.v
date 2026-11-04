@@ -3,7 +3,7 @@
 /* verilator lint_off UNUSEDSIGNAL */
 module tt_um_pchri03_imp_soc
     #(
-        parameter [0:0] ENABLE_CLOCK_DEVICE=1,
+        parameter [0:0] ENABLE_TIMER_DEVICE=1,
         parameter [0:0] ENABLE_INPUT_DEVICE=1,
         parameter [0:0] ENABLE_AUDIO_DEVICE=1,
         parameter [0:0] ENABLE_VGA_DEVICE=1,
@@ -26,7 +26,7 @@ module tt_um_pchri03_imp_soc
     assign uio_oe[7:6] = 2'b11;     // CS2 + CS3
 
     soc #(
-        .ENABLE_CLOCK_DEVICE(ENABLE_CLOCK_DEVICE),
+        .ENABLE_TIMER_DEVICE(ENABLE_TIMER_DEVICE),
         .ENABLE_INPUT_DEVICE(ENABLE_INPUT_DEVICE),
         .ENABLE_AUDIO_DEVICE(ENABLE_AUDIO_DEVICE),
         .ENABLE_VGA_DEVICE(ENABLE_VGA_DEVICE),
