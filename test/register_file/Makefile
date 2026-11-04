@@ -5,7 +5,7 @@ SIM = icarus
 TOPLEVEL_LANG = verilog
 
 # List of Verilog source files.
-VERILOG_SOURCES = $(CURDIR)/../../src/register_file.sv  $(CURDIR)/../../src/register_file_1.sv  $(CURDIR)/../../src/register_file_4.sv
+VERILOG_SOURCES = $(CURDIR)/../../src/register_file.sv
 
 # The name of the toplevel module/entity in your design.
 TOPLEVEL = register_file

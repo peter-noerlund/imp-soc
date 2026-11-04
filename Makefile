@@ -6,8 +6,6 @@ VERILOG_SOURCES=\
 	src/input_device.sv \
 	src/memory_device.sv \
 	src/register_file.sv \
-	src/register_file_1.sv \
-	src/register_file_4.sv \
 	src/serv/rtl/serv_alu.v \
 	src/serv/rtl/serv_bufreg.v \
 	src/serv/rtl/serv_bufreg2.v \

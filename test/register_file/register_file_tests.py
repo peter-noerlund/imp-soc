@@ -4,12 +4,12 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 from cocotb.types import Logic
 
-MASK = 0xF
-SHIFT = 4
-LOOPS = 8
-#ASK = 0x1
-#HIFT = 1
-#OOPS = 32
+#MASK = 0xF
+#SHIFT = 4
+#LOOPS = 8
+MASK = 0x1
+SHIFT = 1
+LOOPS = 32
 
 
 async def rf_read_write(dut, rreg0: int, rreg1: int = 0, wreg0: int = 0, wvalue0: int = 0, wreg1: int = 0, wvalue1: int = 0):
