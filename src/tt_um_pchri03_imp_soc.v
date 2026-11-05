@@ -8,7 +8,8 @@ module tt_um_pchri03_imp_soc
         parameter [0:0] ENABLE_AUDIO_DEVICE=1,
         parameter [0:0] ENABLE_VGA_DEVICE=1,
         parameter [0:0] ENABLE_RAW_INPUT=1,
-        parameter [1:0] GAMEPAD_COUNT=2
+        parameter [1:0] GAMEPAD_COUNT=2,
+        parameter [2:0] W=1
     )
     (
         input wire clk,
@@ -31,7 +32,8 @@ module tt_um_pchri03_imp_soc
         .ENABLE_AUDIO_DEVICE(ENABLE_AUDIO_DEVICE),
         .ENABLE_VGA_DEVICE(ENABLE_VGA_DEVICE),
         .ENABLE_RAW_INPUT(ENABLE_RAW_INPUT),
-        .GAMEPAD_COUNT(GAMEPAD_COUNT)
+        .GAMEPAD_COUNT(GAMEPAD_COUNT),
+        .W(W)
     ) soc(
         .clk(clk),
         .rst(!rst_n),
