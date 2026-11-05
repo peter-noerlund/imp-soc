@@ -23,7 +23,7 @@ module wb_interconnect
         input wire [DATA_WIDTH - 1 : 0] wb_mem_rdt,     //! Wishbone signal DAT_I
         //! @end
 
-        //! @virtualbus WB_CLOCK @dir output Wishbone signals for timer device
+        //! @virtualbus WB_TIMER @dir output Wishbone signals for clock device
         output wire wb_timer_stb,                       //! Wishbone signal STB_O
         input wire wb_timer_ack,                        //! Wishbone signal ACK_I
         input wire wb_timer_err,                        //! Wishbone signal ERR_I
