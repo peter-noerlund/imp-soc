@@ -49,6 +49,7 @@ module vga_device
     always_ff @ (posedge clk) begin
         if (rst) begin
             vgaconfig_enabled_mem <= 1'b0;
+            vgaconfig_addr_mem <= ADDR_MEM_WIDTH'(0);
         end else if (wb_cyc & wb_stb & wb_we & ~ack) begin
             vgaconfig_enabled_mem <= wb_dat[DATA_WIDTH - 1];
             vgaconfig_addr_mem <= wb_dat[ADDR_WIDTH - 1 : ALIGN_WIDTH];
