@@ -34,6 +34,7 @@
 
   "//": "Global Routing",
   "GRT_ADJUSTMENT": 0.10,
+  "GRT_ANTENNA_REPAIR_ITERS": 5,
 
   "//": "CLOCK_PERIOD - Increase this in case you are getting setup time violations.",
   "//": "The value is in nanoseconds, so 20ns == 50MHz.",
