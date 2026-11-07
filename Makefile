@@ -48,10 +48,9 @@ pico_ice/pico_ice_timing.txt: pico_ice/pico_ice.asc pico_ice/pico_ice.pcf
 	icetime -p pico_ice/pico_ice.pcf -r $@ -d up5k -c 25.175 pico_ice/pico_ice.asc
 
 src/config_merged.json: src/config.json info.yaml
-	./tt/tt-tool.py --create-user-config
-
-harden:
 	./tt/tt_tool.py --create-user-config
+
+harden: src/config_merged.json
 	./tt/tt_tool.py --harden
 	./tt/tt_tool.py --print-warnings > summary.md
 	./tt/tt_tool.py --print-stats >> summary.md
