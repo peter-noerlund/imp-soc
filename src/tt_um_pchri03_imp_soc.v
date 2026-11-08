@@ -9,7 +9,7 @@ module tt_um_pchri03_imp_soc
         parameter [0:0] ENABLE_VGA_DEVICE=1,
         parameter [0:0] ENABLE_RAW_INPUT=0,
         parameter [1:0] GAMEPAD_COUNT=1,
-        parameter [2:0] ENABLE_4BIT=0,
+        parameter [0:0] ENABLE_4BIT=0,
         parameter [0:0] ENABLE_COMPRESSED=0
     )
     (
