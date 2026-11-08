@@ -124,13 +124,19 @@ async def test_read_write(dut):
 
     for reg in range(reg_count):
         (value0, value1) = await rf_read_write(dut, reg, reg)
-        assert value0 == 0
-        assert value1 == 0
+        if reg == 3:
+            assert value0 == 0x01000400
+            assert value1 == 0x01000400
+        else:
+            assert value0 == 0
+            assert value1 == 0
 
     for reg in range(reg_count):
         for bit in range(32):
-            if reg == 0 or reg == 3 or reg == 4:
+            if reg == 0 or reg == 4:
                 expected_value = 0
+            elif reg == 3:
+                expected_value = 0x01000400
             else:
                 expected_value = 1 << bit
             await rf_read_write(dut, 0, 0, reg, expected_value)
@@ -145,10 +151,16 @@ async def test_read_write(dut):
 
                 (value0, value1) = await rf_read_write(dut, reg, other_reg)
                 assert value0 == expected_value
-                assert value1 == 0
+                if other_reg == 3:
+                    assert value1 == 0x01000400
+                else:
+                    assert value1 == 0
 
                 (value0, value1) = await rf_read_write(dut, other_reg, reg)
-                assert value0 == 0
+                if other_reg == 3:
+                    assert value0 == 0x01000400
+                else:
+                    assert value0 == 0
                 assert value1 == expected_value
 
         await rf_read_write(dut, 0, 0, reg, 0)
@@ -172,13 +184,19 @@ async def test_write_only(dut):
 
     for reg in range(reg_count):
         (value0, value1) = await rf_read_write(dut, reg, reg)
-        assert value0 == 0
-        assert value1 == 0
+        if reg == 3:
+            assert value0 == 0x01000400
+            assert value1 == 0x01000400
+        else:
+            assert value0 == 0
+            assert value1 == 0
 
     for reg in range(reg_count):
         for bit in range(32):
-            if reg == 0 or reg == 3 or reg == 4: # zero, gp and tp are all 0
+            if reg == 0 or reg == 4: # zero and tp are hardcoded
                 expected_value = 0
+            elif reg == 3:
+                expected_value = 0x01000400 # gp is hardcoded
             else:
                 expected_value = 1 << bit
             await rf_write(dut, reg, expected_value)
@@ -210,11 +228,17 @@ async def test_csr(dut):
 
     for reg in range(reg_count):
         (value0, value1) = await rf_read_write(dut, reg, 33)
-        assert value0 == 0
+        if reg == 3:
+            assert value0 == 0x01000400
+        else:
+            assert value0 == 0
         assert value1 == 4
         
         (value0, value1) = await rf_read_write(dut, reg, 34)
-        assert value0 == 0
+        if reg == 3:
+            assert value0 == 0x01000400
+        else:
+            assert value0 == 0
         assert value1 == 0
 
     await rf_write(dut, 0, 0, 32, 0xBEEFDEAD)
@@ -222,10 +246,16 @@ async def test_csr(dut):
 
     for reg in range(reg_count):
         (value0, value1) = await rf_read_write(dut, reg, 33)
-        assert value0 == 0
+        if reg == 3:
+            assert value0 == 0x01000400
+        else:
+            assert value0 == 0
         assert value1 == 4
         
         (value0, value1) = await rf_read_write(dut, reg, 34)
-        assert value0 == 0
+        if reg == 3:
+            assert value0 == 0x01000400
+        else:
+            assert value0 == 0
         assert value1 == 0xDEADBEEF
 

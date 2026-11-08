@@ -60,7 +60,7 @@ module register_file
     assign regout[0] = W'(0);           // x0 / zero
     assign regout[1] = regs[0][B:0];    // x1 / ra
     assign regout[2] = regs[1][B:0];    // x2 / sp
-    assign regout[3] = W'(0);           // x3 / gp
+    //assign regout[3] = W'(0);           // x3 / gp
     assign regout[4] = W'(0);           // x4 / tp
     assign regout[5] = regs[2][B:0];    // x5 / t0
     assign regout[6] = regs[3][B:0];    // x6 / t1
@@ -74,6 +74,17 @@ module register_file
     assign regout[14] = regs[11][B:0];  // x14 / a4
     assign regout[15] = regs[12][B:0];  // x15 / a5
     assign regout_meip = regs[13][B:0];
+
+    generate
+        if (W == 1) begin: gen_gp1
+            assign regout[3] = (cnt == COUNTER_WIDTH'(24)) || (cnt == COUNTER_WIDTH'(10));
+        end else if (W == 4) begin: gen_gp4
+            assign regout[3] =
+                (cnt == COUNTER_WIDTH'(6)) ? 4'h1 :
+                (cnt == COUNTER_WIDTH'(2)) ? 4'h4 :
+                 4'h0;
+        end
+    endgenerate
 
     generate
         if (W == 1) begin: gen_mtvec1
