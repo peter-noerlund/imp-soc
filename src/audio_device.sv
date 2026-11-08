@@ -86,8 +86,8 @@ module audio_device
     wire _unused = &{wb_adr, wb_sel, wb_cti, wb_bte};
 
     generate
-        if (DATA_WIDTH > COUNTER_WIDTH) begin: gen_unused_dat
-            wire _unused_dat = &{wb_dat[DATA_WIDTH - 1 : COUNTER_WIDTH]};
+        if (DATA_WIDTH > RESET_VALUE_WIDTH) begin: gen_unused_dat1
+            wire _unused_dat1 = &{wb_dat[DATA_WIDTH - 1 : RESET_VALUE_WIDTH]};
         end
     endgenerate
 endmodule
