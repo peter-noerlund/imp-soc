@@ -2,14 +2,14 @@
 
 module soc
     #(
-        parameter int ENABLE_TIMER_DEVICE=1,
-        parameter int ENABLE_INPUT_DEVICE=1,
-        parameter int ENABLE_AUDIO_DEVICE=1,
-        parameter int ENABLE_VGA_DEVICE=1,
-        parameter int ENABLE_RAW_INPUT=1,
-        parameter int GAMEPAD_COUNT=2,
-        parameter int ENABLE_4BIT=0,
-        parameter int ENABLE_COMPRESSED=0
+        parameter [0:0] ENABLE_TIMER_DEVICE=1,
+        parameter [0:0] ENABLE_INPUT_DEVICE=1,
+        parameter [0:0] ENABLE_AUDIO_DEVICE=1,
+        parameter [0:0] ENABLE_VGA_DEVICE=1,
+        parameter [0:0] ENABLE_RAW_INPUT=1,
+        parameter [1:0] GAMEPAD_COUNT=2,
+        parameter [0:0] ENABLE_4BIT=0,
+        parameter [0:0] ENABLE_COMPRESSED=0
     )
     (
         input wire clk,
