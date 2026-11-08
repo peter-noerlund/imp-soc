@@ -28,6 +28,7 @@ project:
     - serv/rtl/serv_alu.v
     - serv/rtl/serv_bufreg.v
     - serv/rtl/serv_bufreg2.v
+    - serv/rtl/serv_compdec.v
     - serv/rtl/serv_ctrl.v
     - serv/rtl/serv_csr.v
     - serv/rtl/serv_decode.v
