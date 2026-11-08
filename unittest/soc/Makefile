@@ -9,13 +9,9 @@ VERILOG_SOURCES =  \
 	$(CURDIR)/../../src/soc.sv \
 	$(CURDIR)/../../src/audio_device.sv \
 	$(CURDIR)/../../src/cpu.sv \
-	$(CURDIR)/../../src/clock_device.sv \
-	$(CURDIR)/../../src/dummy_device.sv \
 	$(CURDIR)/../../src/input_device.sv \
 	$(CURDIR)/../../src/memory_device.sv \
 	$(CURDIR)/../../src/register_file.sv \
-	$(CURDIR)/../../src/register_file_1.sv \
-	$(CURDIR)/../../src/register_file_4.sv \
 	$(CURDIR)/../../src/vga_device.sv \
 	$(CURDIR)/../../src/vga_memory.sv \
 	$(CURDIR)/../../src/vga_renderer.sv \
@@ -35,7 +31,8 @@ VERILOG_SOURCES =  \
 	$(CURDIR)/../../src/serv/rtl/serv_rf_if.v \
 	$(CURDIR)/../../src/serv/rtl/serv_state.v \
 	$(CURDIR)/../../src/serv/rtl/serv_top.v \
-	$(CURDIR)/../../src/serv/servile/servile_arbiter.v
+	$(CURDIR)/../../src/serv/servile/servile_arbiter.v \
+	$(CURDIR)/../../src/timer_device.sv \
 
 # The name of the toplevel module/entity in your design.
 TOPLEVEL = soc

@@ -70,10 +70,16 @@ async def rf_write(dut, wreg0: int, wvalue0: int, wreg1: int = 0, wvalue1: int =
     dut.rf_wreq.value = 1
 
     await ClockCycles(dut.clk, 1)
+    
+    dut.rf_wreq.value = 0
+
+    for i in range(64):
+        if dut.rf_ready.value == 1:
+            break
+        await ClockCycles(dut.clk, 1)
 
     assert dut.rf_ready.value == 1
 
-    dut.rf_wreq.value = 0
     dut.rf_rreg0.value = 0
     dut.rf_rreg1.value = 0
 
@@ -112,6 +118,8 @@ async def test_read_write(dut):
     cocotb.start_soon(clock.start())
 
     dut.rst.value = 1
+    dut.rf_rreq.value = 0
+    dut.rf_wreq.value = 0
 
     await ClockCycles(dut.clk, 10)
     dut.rst.value = 0
@@ -172,6 +180,8 @@ async def test_write_only(dut):
     cocotb.start_soon(clock.start())
 
     dut.rst.value = 1
+    dut.rf_rreq.value = 0
+    dut.rf_wreq.value = 0
 
     await ClockCycles(dut.clk, 10)
     dut.rst.value = 0
@@ -214,6 +224,8 @@ async def test_csr(dut):
     cocotb.start_soon(clock.start())
 
     dut.rst.value = 1
+    dut.rf_rreq.value = 0
+    dut.rf_wreq.value = 0
 
     await ClockCycles(dut.clk, 10)
     dut.rst.value = 0

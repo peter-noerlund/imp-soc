@@ -2,8 +2,9 @@
 
 module cpu
     #(
-        parameter int ENABLE_4BIT=0,
-        parameter int ENABLE_COMPRESSED=0
+        parameter [0:0] ENABLE_4BIT=0,
+        parameter [0:0] ENABLE_COMPRESSED=0,
+        parameter [0:0] DEBUG=0
     )
     (
         input wire clk,
@@ -65,7 +66,7 @@ module cpu
     assign wb_cyc = wb_stb;
     
     /* verilator lint_off PINMISSING */
-    serv_top #(.WITH_CSR(1), .W(W), .RESET_PC(32'h00000000), .COMPRESSED(ENABLE_COMPRESSED)) serv(
+    serv_top #(.WITH_CSR(1), .W(W), .RESET_PC(32'h00000000), .COMPRESSED(ENABLE_COMPRESSED), .DEBUG(DEBUG)) serv(
         .clk(clk),
         .i_rst(rst),
         .i_timer_irq(irq),
@@ -106,7 +107,7 @@ module cpu
     );
     /* verilator lint_on PINMISSING */
    
-    register_file #(.W(W)) rf(
+    register_file #(.W(W), .DEBUG(DEBUG)) rf(
         .clk(clk),
         .rst(rst),
 
