@@ -25,9 +25,9 @@
     "ENABLE_INPUT_DEVICE=1",
     "ENABLE_AUDIO_DEVICE=1",
     "GAMEPAD_COUNT=1",
-    "ENABLE_RAW_INPUT=0",
-    "W=1"
+    "ENABLE_RAW_INPUT=0"
   ],
+  "SYNTH_HIERARCHY_MODE": "flatten",
 
   "//": "Placement",
   "PL_TARGET_DENSITY_PCT": 80,

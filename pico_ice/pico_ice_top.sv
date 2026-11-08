@@ -15,12 +15,14 @@ module pico_ice_top
         input wire SW2
     );
 
-    localparam [0:0] ENABLE_TIMER_DEVICE = 1;
-    localparam [0:0] ENABLE_INPUT_DEVICE = 1;
-    localparam [0:0] ENABLE_AUDIO_DEVICE = 1;
-    localparam [0:0] ENABLE_VGA_DEVICE = 1;
-    localparam [0:0] ENABLE_RAW_INPUT = 1;
-    localparam int GAMEPAD_COUNT = 2;
+    localparam int ENABLE_TIMER_DEVICE = 1;
+    localparam int ENABLE_INPUT_DEVICE = 1;
+    localparam int ENABLE_AUDIO_DEVICE = 1;
+    localparam int ENABLE_VGA_DEVICE = 1;
+    localparam int ENABLE_RAW_INPUT = 0;
+    localparam int GAMEPAD_COUNT = 1;
+    localparam int ENABLE_4BIT = 0;
+    localparam int ENABLE_COMPRESSED = 0;
     
     // ICE_PMOD0 is used for VGA PMOD
     // ICE_PMOD1 is used for SNES PMOD

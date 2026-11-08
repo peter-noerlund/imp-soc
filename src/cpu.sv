@@ -2,7 +2,8 @@
 
 module cpu
     #(
-        parameter int W=1
+        parameter int ENABLE_4BIT=0,
+        parameter int ENABLE_COMPRESSED=0
     )
     (
         input wire clk,
@@ -26,6 +27,7 @@ module cpu
         input wire irq
     );
 
+    localparam int W = ENABLE_4BIT ? 4 : 1;
     localparam int B = W - 1;
 
     // Register File interface
@@ -63,7 +65,7 @@ module cpu
     assign wb_cyc = wb_stb;
     
     /* verilator lint_off PINMISSING */
-    serv_top #(.WITH_CSR(1), .W(W), .RESET_PC(32'h00000000)) serv(
+    serv_top #(.WITH_CSR(1), .W(W), .RESET_PC(32'h00000000), .COMPRESSED(ENABLE_COMPRESSED)) serv(
         .clk(clk),
         .i_rst(rst),
         .i_timer_irq(irq),

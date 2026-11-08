@@ -2,13 +2,14 @@
 
 module soc
     #(
-        parameter [0:0] ENABLE_TIMER_DEVICE=1,
-        parameter [0:0] ENABLE_INPUT_DEVICE=1,
-        parameter [0:0] ENABLE_AUDIO_DEVICE=1,
-        parameter [0:0] ENABLE_VGA_DEVICE=1,
-        parameter [0:0] ENABLE_RAW_INPUT=1,
-        parameter [1:0] GAMEPAD_COUNT=2,
-        parameter [2:0] W=1
+        parameter int ENABLE_TIMER_DEVICE=1,
+        parameter int ENABLE_INPUT_DEVICE=1,
+        parameter int ENABLE_AUDIO_DEVICE=1,
+        parameter int ENABLE_VGA_DEVICE=1,
+        parameter int ENABLE_RAW_INPUT=1,
+        parameter int GAMEPAD_COUNT=2,
+        parameter int ENABLE_4BIT=0,
+        parameter int ENABLE_COMPRESSED=0
     )
     (
         input wire clk,
@@ -98,7 +99,7 @@ module soc
 
     wire irq;
 
-    cpu #(.W(W)) cpu(
+    cpu #(.ENABLE_4BIT(ENABLE_4BIT), .ENABLE_COMPRESSED(ENABLE_COMPRESSED)) cpu(
         .clk(clk),
         .rst(rst),
 
@@ -272,7 +273,7 @@ module soc
 
     generate
         if (ENABLE_AUDIO_DEVICE) begin: audio_device
-            audio_device #(.ADDR_WIDTH(3), .COUNTER_WIDTH(18)) audio_device(
+            audio_device #(.ADDR_WIDTH(3), .COUNTER_WIDTH(18), .RESET_VALUE_WIDTH(16)) audio_device(
                 .clk(clk),
                 .rst(rst),
 
