@@ -104,4 +104,13 @@ module input_device
     end
 
     wire _unused = &{wb_adr, wb_we, wb_sel, wb_dat, wb_cti, wb_bte};
+
+    generate
+        if (!ENABLE_RAW_INPUT) begin: gen_unused_raw_input
+            wire _unused_raw_input = &{input_pmod[7], input_pmod[3:0]};
+        end
+        if (GAMEPAD_COUNT == 0 && !ENABLE_RAW_INPUT) begin: gen_unused_gamepad
+            wire _unused_gamepad = &{input_pmod[5:4]};
+        end
+    endgenerate
 endmodule
