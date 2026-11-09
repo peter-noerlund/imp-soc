@@ -18,7 +18,7 @@ VERILOG_SOURCES=\
 	src/serv/rtl/serv_top.v \
 	src/serv/servile/servile_arbiter.v \
 	src/soc.sv \
-    src/timer_device.sv \
+	src/timer_device.sv \
 	src/tt_um_pchri03_imp_soc.v \
 	src/vga_device.sv \
 	src/vga_memory.sv \
@@ -30,7 +30,7 @@ VERILOG_SOURCES=\
 
 all: lint
 
-fpga: pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
+fpga: colorlight/colorlight.svf pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
 
 pico_ice/pico_ice_pll.v:
 	icepll -q -i 48 -o 25.175 -p -m -f $@
@@ -46,6 +46,20 @@ pico_ice/pico_ice.bin: pico_ice/pico_ice.asc
 
 pico_ice/pico_ice_timing.txt: pico_ice/pico_ice.asc pico_ice/pico_ice.pcf
 	icetime -p pico_ice/pico_ice.pcf -r $@ -d up5k -c 25.175 pico_ice/pico_ice.asc
+
+colorlight/colorlight_pll.v:
+	ecppll -i 25 -o 65 -f colorlight/colorlight_pll.v
+
+colorlight/colorlight.json: $(VERILOG_SOURCES) colorlight/colorlight_top.sv colorlight/colorlight_pll.v
+	yosys -q -p "synth_ecp5 -top colorlight_top -json $@" -DFPGA -DCOLORLIGHT -l colorlight/colorlight.log $^
+
+colorlight/colorlight_out.config: colorlight/colorlight.json
+	nextpnr-ecp5 --25k --package CABGA381 --speed 6 --json $^ --textcfg $@ --lpf colorlight/colorlight.lpf --freq 65
+
+colorlight/colorlight.bit: colorlight/colorlight_out.config
+	ecppack --svf colorlight/colorlight.svf $^ $@
+
+colorlight/colorlight.svf: colorlight/colorlight.bit
 
 src/config_merged.json: src/config.json info.yaml
 	./tt/tt_tool.py --create-user-config
