@@ -19,9 +19,9 @@ module pico_ice_top
     localparam int ENABLE_INPUT_DEVICE = 1;
     localparam int ENABLE_AUDIO_DEVICE = 1;
     localparam int ENABLE_VGA_DEVICE = 1;
-    localparam int ENABLE_RAW_INPUT = 0;
-    localparam int GAMEPAD_COUNT = 1;
-    localparam int ENABLE_4BIT = 0;
+    localparam int ENABLE_RAW_INPUT = 1;
+    localparam int GAMEPAD_COUNT = 2;
+    localparam int ENABLE_4BIT = 1;
     localparam int ENABLE_COMPRESSED = 0;
     
     // ICE_PMOD0 is used for VGA PMOD
@@ -31,7 +31,6 @@ module pico_ice_top
     wire clk;
     wire clk_locked;
     bit rst;
-    bit [3:0] rst_counter;
 
     // ICE_PMOD2
     wire [7:0] pmod2_in;
@@ -82,23 +81,7 @@ module pico_ice_top
     assign spi_flash_ss_n = pmod2_out[0];
     assign spi_psram_ss_n = pmod2_out[6];
 
-    initial begin
-        rst = 1'b1;
-        rst_counter = 4'd0;
-    end
-
-    always_ff @ (posedge clk) begin
-        if (!SW2 || !clk_locked) begin
-            rst <= 1'b1;
-            rst_counter <= 4'd0;
-        end else if (rst) begin
-            if (rst_counter == 4'd15) begin
-                rst <= 1'b0;
-            end else begin
-                rst_counter <= rst_counter + 4'd1;
-            end
-        end
-    end
+    assign rst = ~SW2 | ~clk_locked;
 
     always_ff @ (posedge clk) begin
         vga_vsync_buf <= vga_vsync;
