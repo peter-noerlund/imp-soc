@@ -24,6 +24,7 @@ project:
     - input_device.sv
     - memory_device.sv
     - register_file.sv
+    - rom_device.sv
     - serv/rtl/serv_aligner.v
     - serv/rtl/serv_alu.v
     - serv/rtl/serv_bufreg.v

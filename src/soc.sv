@@ -55,6 +55,13 @@ module soc
     wire wb_cpu_mem_err;
     wire [31:0] wb_cpu_mem_rdt;
 
+    // ROM
+    wire wb_cpu_rom_stb;
+    wire wb_cpu_rom_ack;
+    wire wb_cpu_rom_rty;
+    wire wb_cpu_rom_err;
+    wire [31:0] wb_cpu_rom_rdt;
+
     // Clock device
     wire wb_cpu_timer_stb;
     wire wb_cpu_timer_ack;
@@ -133,6 +140,12 @@ module soc
         .wb_mem_err(wb_cpu_mem_err),
         .wb_mem_rdt(wb_cpu_mem_rdt),
 
+        .wb_rom_stb(wb_cpu_rom_stb),
+        .wb_rom_ack(wb_cpu_rom_ack),
+        .wb_rom_rty(wb_cpu_rom_rty),
+        .wb_rom_err(wb_cpu_rom_err),
+        .wb_rom_rdt(wb_cpu_rom_rdt),
+
         .wb_timer_stb(wb_cpu_timer_stb),
         .wb_timer_ack(wb_cpu_timer_ack),
         .wb_timer_rty(wb_cpu_timer_rty),
@@ -181,6 +194,37 @@ module soc
         .spi_sio_oe(spi_sio_oe),
         .spi_flash_ss_n(spi_flash_ss_n),
         .spi_psram_ss_n(spi_psram_ss_n)
+    );
+
+    rom_device #(
+            .WORD_COUNT(9),
+            .ROM({
+                32'h00050613,   // __mulsi3:    mv a2, a0
+                32'h00000513,   //              li a0, 0
+                32'h0015f693,   // .L1:         andi a3, a1, 1
+                32'h00068463,   //              beqz a3, .L2
+                32'h00c50533,   //              add a0, a0, a2
+                32'h0015d593,   // .L2:         srli a1, a1, 1
+                32'h00161613,   //              slli a2, a2, 1
+                32'hfe0596e3,   //              bnez a1, .L1
+                32'h00008067    //              ret
+            })
+    ) rom_device(
+        .clk(clk),
+        .rst(rst),
+
+        .wb_cyc(wb_cpu_cyc),
+        .wb_stb(wb_cpu_rom_stb),
+        .wb_adr(wb_cpu_adr[5:0]),
+        .wb_we(wb_cpu_we),
+        .wb_sel(wb_cpu_sel),
+        .wb_dat(wb_cpu_dat),
+        .wb_cti(wb_cpu_cti),
+        .wb_bte(wb_cpu_bte),
+        .wb_ack(wb_cpu_rom_ack),
+        .wb_rty(wb_cpu_rom_rty),
+        .wb_err(wb_cpu_rom_err),
+        .wb_rdt(wb_cpu_rom_rdt)
     );
 
     generate
