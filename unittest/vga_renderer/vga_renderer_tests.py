@@ -6,21 +6,32 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 
 
+def get_c3(c1: int, c2: int) -> int:
+    r1 = (c1 >> 4) & 0x03
+    g1 = (c1 >> 2) & 0x03
+    b1 = c1 & 0x03
+    r2 = (c2 >> 4) & 0x03
+    g2 = (c2 >> 2) & 0x03
+    b2 = c2 & 0x03
+    r3 = (r1 + r2) // 2
+    g3 = (g1 + g2) // 2
+    b3 = (b1 + b2) // 2
+    return (r3 << 4) | (g3 << 2) | b3
+
+
 def decode_line(line_buffer: list) -> list:
     line = []
     for i in range(16):
         chunk = line_buffer[i]
         c2 = (chunk >> 22) & 0x3F;
         c1 = (chunk >> 16) & 0x3F;
+        c3 = get_c3(c1, c2)
+
+        colors = [0, c1, c2, c3]
         pixels = chunk & 0xFFFF
         for j in range(8):
             pixel_idx = (pixels >> (j * 2)) & 0x03
-            if pixel_idx == 1:
-                line.append(c1)
-            elif pixel_idx == 2:
-                line.append(c2)
-            else:
-                line.append(0)
+            line.append(colors[pixel_idx])
     return line
 
 
@@ -60,8 +71,8 @@ async def verify_line(dut, line_buffer: list):
         blue = pixel & 0x3
 
         assert int(dut.vga_red.value) == red, f"Pixel {i} should have color 0x{pixel:06x} (red={red}, line={pixels}, line_buffer={line_buffer})"
-        assert int(dut.vga_green.value) == green, f"Pixel {i} should have color 0x{pixel:06x} (green={green})"
-        assert int(dut.vga_blue.value) == blue, f"Pixel {i} should have color 0x{pixel:06x} (blue={blue})"
+        assert int(dut.vga_green.value) == green, f"Pixel {i} should have color 0x{pixel:06x} (green={green}, line={pixels}, line_buffer={line_buffer})"
+        assert int(dut.vga_blue.value) == blue, f"Pixel {i} should have color 0x{pixel:06x} (blue={blue}, line={pixels}, line_buffer={line_buffer})"
         await ClockCycles(dut.clk, 1)
 
 

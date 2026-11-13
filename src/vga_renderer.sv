@@ -52,6 +52,7 @@ module vga_renderer
     bit [27:0] chunk;       // Current chunk
     wire [5:0] color1;      // Color1 from chunk
     wire [5:0] color2;      // Color2 from chunk
+    wire [5:0] color3;      // Interpolated color3
     wire [5:0] black;       // The color black
     wire [15:0] pixels;     // The pixels
     wire [1:0] pixel;       // The current pixel
@@ -60,11 +61,38 @@ module vga_renderer
     wire [1:0] green;       // Green part of current pixel
     wire [1:0] blue;        // Blue part of current pixel
 
+    wire [1:0] red1;
+    wire [1:0] green1;
+    wire [1:0] blue1;
+    wire [1:0] red2;
+    wire [1:0] green2;
+    wire [1:0] blue2;
+    wire [1:0] red3;
+    wire [1:0] green3;
+    wire [1:0] blue3;
+    wire [2:0] sum_red;
+    wire [2:0] sum_green;
+    wire [2:0] sum_blue;
+
     wire [CHUNK_IDX_WIDTH - 1 : 0] chunk_idx;       // Index of current chunk
     wire [PIXEL_IDX_WIDTH - 1 : 0] pixel_idx;       // Index of current pixel
     wire [SUBPIXEL_IDX_WIDTH - 1 : 0] subpixel_idx; // Index of current subpixel
 
     int i;
+
+    assign red1 = color1[5:4];
+    assign green1 = color1[3:2];
+    assign blue1 = color1[1:0];
+    assign red2 = color2[5:4];
+    assign green2 = color2[3:2];
+    assign blue2 = color2[1:0];
+    assign sum_red = 3'(red1) + 3'(red2);
+    assign sum_green = 3'(green1) + 3'(green2);
+    assign sum_blue = 3'(blue1) + 3'(blue2);
+    assign red3 = sum_red[2:1];
+    assign green3 = sum_green[2:1];
+    assign blue3 = sum_blue[2:1];
+    assign color3 = {red3, green3, blue3};
     
     // h_pos implicitly stores at lot of state.
     // 
@@ -97,6 +125,7 @@ module vga_renderer
     assign pixel_color =
         (pixel == 2'd1) ? color1 :
         (pixel == 2'd2) ? color2 :
+        (pixel == 2'd3) ? color3 :
         black;
 
     assign red = pixel_color[5:4];
