@@ -321,7 +321,7 @@ module soc
             wire [24:0] vgaconfig_addr;
 
             wire vgactrl_read_req;
-            wire [383:0] vgactrl_memory;
+            wire [447:0] vgactrl_memory;
 
             // VGA Memory bus
             wire wb_vga_cyc;
@@ -402,7 +402,7 @@ module soc
                 .vgaconfig_addr(vgaconfig_addr)
             );
 
-            vga_memory #(.ADDR_WIDTH(25), .WORD_COUNT(16), .WORD_SIZE(24), .LINE_COUNT(96)) vga_memory(
+            vga_memory #(.ADDR_WIDTH(25), .WORD_COUNT(16), .LINE_COUNT(96)) vga_memory(
                 .clk(clk),
                 .rst(rst),
 

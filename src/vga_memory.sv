@@ -17,7 +17,6 @@ module vga_memory
     #(
         parameter int ADDR_WIDTH=32,
         parameter int WORD_COUNT=16,
-        parameter int WORD_SIZE=24,
         parameter int LINE_COUNT=96
     )
     (
@@ -29,7 +28,7 @@ module vga_memory
         /* verilator lint_on UNUSEDSIGNAL */
 
         input wire vgactrl_read_req,                            //! Read line request
-        output wire [WORD_COUNT * WORD_SIZE - 1 : 0] vgactrl_memory,   //! Memory
+        output wire [WORD_COUNT * 28 - 1 : 0] vgactrl_memory,   //! Memory
 
         //! @virtualbus WB @dir output Wishbone bus
         output wire wb_cyc,                             //! Wishbone signal CYC_O
@@ -48,6 +47,8 @@ module vga_memory
         /* verilator lint_on UNUSEDSIGNAL */
         //! @end
     );
+
+    localparam int WORD_SIZE = 28;
 
     localparam [2:0] CTI_INCREMENT = 3'b010;
     localparam [2:0] CTI_END_OF_BURST = 3'b111;
@@ -127,14 +128,10 @@ module vga_memory
     // Buffer
     always_ff @ (posedge clk) begin
         if (!rst && ack) begin
-            // In memory chunks are stored as 32-bit integers aligned to 4 bits:
             buffer <= {
                 wb_rdt[29:24],  // color 2
                 wb_rdt[21:16],  // color 1
-                wb_rdt[14:12],  // pixel group 4 (pixel 7 and 8)
-                wb_rdt[10:8],   // pixel group 3 (pixel 5 and 6)
-                wb_rdt[6:4],    // pixel group 2 (pixel 3 and 4)
-                wb_rdt[2:0]     // pixel group 1 (pixel 1 and 2)
+                wb_rdt[15:0]    // pixels 1 to 8
             };
         end
     end

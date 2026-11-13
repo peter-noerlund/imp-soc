@@ -11,7 +11,7 @@ module vga_renderer
         input wire vgaconfig_enabled,
 
         output wire vgactrl_read_req,
-        input wire [CHUNK_COUNT * 24 - 1 : 0] vgactrl_memory,
+        input wire [CHUNK_COUNT * 28 - 1 : 0] vgactrl_memory,
 
         //! @virtualbus VGA @dir output VGA
         output wire vga_hsync,                      //! VGA horizontal sync
@@ -39,17 +39,7 @@ module vga_renderer
     localparam int SUBPIXEL_WIDTH = HPIXELS / PIXEL_COUNT;
     localparam int SUBPIXEL_IDX_WIDTH = $clog2(SUBPIXEL_WIDTH);
     localparam int CHUNK_IDX_WIDTH = $clog2(CHUNK_COUNT);
-    localparam int GROUP_IDX_WIDTH = 2;
-
-    localparam [2:0] PIXELS_BB = 3'b000;
-    localparam [2:0] PIXELS_B1 = 3'b001;
-    localparam [2:0] PIXELS_B2 = 3'b010;
-    localparam [2:0] PIXELS_1B = 3'b011;
-    localparam [2:0] PIXELS_11 = 3'b100;
-    localparam [2:0] PIXELS_12 = 3'b101;
-    localparam [2:0] PIXELS_2B = 3'b110;
-    // PIXELS_21 is not allowed
-    localparam [2:0] PIXELS_22 = 3'b111;
+    localparam int PIXEL_IDX_WIDTH = 3;
 
     wire [HPOS_WIDTH - 1 : 0] h_pos;
     wire [VPOS_WIDTH - 1 : 0] v_pos;
@@ -59,23 +49,20 @@ module vga_renderer
 
     bit active;
 
-    bit [23:0] chunk;
-    wire [2:0] group;
-    wire [5:0] color1;
-    wire [5:0] color2;
-    bit [11:0] pixels;
-    wire [5:0] black;
-    wire [5:0] pixel0;
-    wire [5:0] pixel1;
-    wire [5:0] pixel;
-    wire [1:0] red;
-    wire [1:0] green;
-    wire [1:0] blue;
+    bit [27:0] chunk;       // Current chunk
+    wire [5:0] color1;      // Color1 from chunk
+    wire [5:0] color2;      // Color2 from chunk
+    wire [5:0] black;       // The color black
+    wire [15:0] pixels;     // The pixels
+    wire [1:0] pixel;       // The current pixel
+    wire [5:0] pixel_color; // The color of the current pixel
+    wire [1:0] red;         // Red part of current pixel
+    wire [1:0] green;       // Green part of current pixel
+    wire [1:0] blue;        // Blue part of current pixel
 
-    wire [CHUNK_IDX_WIDTH - 1 : 0] chunk_idx;
-    wire [GROUP_IDX_WIDTH - 1 : 0] group_idx;
-    wire pixel_idx;
-    wire [SUBPIXEL_IDX_WIDTH - 1 : 0] subpixel_idx;
+    wire [CHUNK_IDX_WIDTH - 1 : 0] chunk_idx;       // Index of current chunk
+    wire [PIXEL_IDX_WIDTH - 1 : 0] pixel_idx;       // Index of current pixel
+    wire [SUBPIXEL_IDX_WIDTH - 1 : 0] subpixel_idx; // Index of current subpixel
 
     int i;
     
@@ -86,32 +73,35 @@ module vga_renderer
     //  1
     //  0 9 8 7 6 5 4 3 2 1 0
     // +-+-+-+-+-+-+-+-+-+-+-+
-    // | |   C   | G |P|  S  |
+    // | |   C   |  P  |  S  |
     // +-+-+-+-+-+-+-+-+-+-+-+
     //
     // For 640x480 (512x384) it looks like this:
     //
     //  9 8 7 6 5 4 3 2 1 0
     // +-+-+-+-+-+-+-+-+-+-+
-    // | |   C   | G |P| S |
+    // | |   C   |  P  | S |
     // +-+-+-+-+-+-+-+-+-+-+
 
     assign subpixel_idx = h_pos[SUBPIXEL_IDX_WIDTH - 1 : 0];
-    assign pixel_idx = h_pos[SUBPIXEL_IDX_WIDTH];
-    assign group_idx = h_pos[GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : SUBPIXEL_IDX_WIDTH];
-    assign chunk_idx = h_pos[CHUNK_IDX_WIDTH + GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : GROUP_IDX_WIDTH + SUBPIXEL_IDX_WIDTH];
+    assign pixel_idx = h_pos[PIXEL_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : SUBPIXEL_IDX_WIDTH];
+    assign chunk_idx = h_pos[CHUNK_IDX_WIDTH + PIXEL_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : PIXEL_IDX_WIDTH + SUBPIXEL_IDX_WIDTH];
 
-    assign group = chunk[group_idx * 3 + 2 -: 3];
-    assign color2 = chunk[23:18];
-    assign color1 = chunk[17:12];
-
-    assign pixel0 = pixels[5:0];
-    assign pixel1 = pixels[11:6];
     assign black = 6'b000000;
-    assign pixel = pixel_idx ? pixel1 : pixel0;
-    assign red = pixel[5:4];
-    assign green = pixel[3:2];
-    assign blue = pixel[1:0];
+    assign color2 = chunk[27:22];
+    assign color1 = chunk[21:16];
+    assign pixels = chunk[15:0];
+
+    assign pixel = pixels[pixel_idx * 2 + 1 -: 2];
+
+    assign pixel_color =
+        (pixel == 2'd1) ? color1 :
+        (pixel == 2'd2) ? color2 :
+        black;
+
+    assign red = pixel_color[5:4];
+    assign green = pixel_color[3:2];
+    assign blue = pixel_color[1:0];
 
     assign vga_red = blank ? 2'b00 : red;
     assign vga_green = blank ? 2'b00 : green;
@@ -121,23 +111,10 @@ module vga_renderer
     assign vgactrl_read_req = h_pos == HPOS_WIDTH'(HPIXELS - 1) && subpixel_idx == SUBPIXEL_IDX_WIDTH'(SUBPIXEL_WIDTH - 1) && active && vgaconfig_enabled;
 
     always_comb begin
-        case (group)
-            PIXELS_BB: pixels = {black, black};
-            PIXELS_B1: pixels = {black, color1};
-            PIXELS_B2: pixels = {black, color2};
-            PIXELS_1B: pixels = {color1, black};
-            PIXELS_11: pixels = {color1, color1};
-            PIXELS_12: pixels = {color1, color2};
-            PIXELS_2B: pixels = {color2, black};
-            PIXELS_22: pixels = {color2, color2};
-        endcase
-    end
-
-    always_comb begin
-        chunk = 24'h000000;
+        chunk = 28'h0000000;
         for (i = 0; i != CHUNK_COUNT; i++) begin
             if (chunk_idx == CHUNK_IDX_WIDTH'(i)) begin
-                chunk = vgactrl_memory[i * 24 + 23 -: 24];
+                chunk = vgactrl_memory[i * 28 + 27 -: 28];
             end
         end
     end
