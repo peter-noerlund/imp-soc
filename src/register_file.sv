@@ -95,9 +95,9 @@ module register_file
 
     generate
         if (W == 1) begin: gen_mtvec1
-            assign regout_mtvec = cnt == COUNTER_WIDTH'(2) ? 1'b1 : 1'b0;
+            assign regout_mtvec = cnt == COUNTER_WIDTH'(3) ? 1'b1 : 1'b0;
         end else if (W == 4) begin: gen_mtvec4
-            assign regout_mtvec = cnt == COUNTER_WIDTH'(0) ? 4'b0100 : 4'b0000;
+            assign regout_mtvec = cnt == COUNTER_WIDTH'(0) ? 4'b1000 : 4'b0000;
         end
     endgenerate
 
