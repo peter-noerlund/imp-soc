@@ -8,6 +8,7 @@ colorlight/colorlight.json
 colorlight/colorlight_out.config
 colorlight/colorlight.bit
 colorlight/colorlight.svf
+colorlight/colorlight.log
 pico_ice/pico_ice.asc
 pico_ice/pico_ice.log
 pico_ice/pico_ice_pll.v

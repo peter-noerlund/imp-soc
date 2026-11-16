@@ -71,11 +71,14 @@ harden: src/config_merged.json
 	./tt/tt_tool.py --print-cell-summary >> summary.md
 	./tt/tt_tool.py --print-cell-category >> summary.md
 
+program-colorlight: colorlight/colorlight.svf
+	openocd -f colorlight/openocd.cfg
+
 lint:
 	verilator --lint-only -Wall $(VERILOG_SOURCES)
 
 lint-fpga:
-	verilator --lint-only -Wall -DFPGA -DPICO_ICE -DHAVE_LED_DEVICE $(VERILOG_SOURCES)
+	verilator --lint-only -Wall -DFPGA -DCOLORLIGHT $(VERILOG_SOURCES)
 
 test:
 	$(MAKE) -C test
