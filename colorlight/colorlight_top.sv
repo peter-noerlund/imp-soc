@@ -3,9 +3,9 @@
 module colorlight_top
     (
         input wire clk25,
-        
+
         output wire LED,
-        
+
         output wire [7:0] P3_PMOD1,
         inout wire [7:0] P3_PMOD2,
         input wire [7:0] P2_PMOD1
@@ -49,8 +49,8 @@ module colorlight_top
     assign p3_pmod2_oe[7:6] = 2'b11;
 
     assign P3_PMOD1 = {
-        vga_vsync, vga_blue[0], vga_green[0], vga_red[0],
-        vga_hsync, vga_blue[1], vga_green[1], vga_red[1]
+        vga_hsync, vga_blue[0], vga_green[0], vga_red[0],
+        vga_vsync, vga_blue[1], vga_green[1], vga_red[1]
     };
 
     assign spi_sck = p3_pmod2_out[3];
@@ -60,7 +60,7 @@ module colorlight_top
     assign spi_flash_ss_n = p3_pmod2_out[0];
     assign spi_psram_ss_n = p3_pmod2_out[6];
 
-    assign LED = ~rst;
+    assign LED = rst;
 
     pll pll(
         .clkin(clk25),

@@ -28,7 +28,7 @@ VERILOG_SOURCES=\
 	src/wb_interconnect.sv \
 	src/write_aligner.sv
 
-all: lint
+all: colorlight/colorlight.svf
 
 fpga: colorlight/colorlight.svf pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
 
@@ -72,7 +72,7 @@ harden: src/config_merged.json
 	./tt/tt_tool.py --print-cell-category >> summary.md
 
 program-colorlight: colorlight/colorlight.svf
-	openocd -f colorlight/openocd.cfg
+	sudo openocd -f colorlight/openocd.cfg
 
 lint:
 	verilator --lint-only -Wall $(VERILOG_SOURCES)
