@@ -198,4 +198,6 @@ module vga_renderer
         .vga_blank(blank)
     );
 `endif // PICO_ICE
+
+    wire _unused = &{sum_red[0], sum_green[0], sum_blue[0]};
 endmodule
