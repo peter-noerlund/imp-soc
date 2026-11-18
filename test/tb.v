@@ -45,11 +45,11 @@ module tb ();
     assign spi_psram_ss_n   = uio_out[6];
     assign audio_out        = uio_out[7];
 
-    assign vga_hsync        = io_out[7];
-    assign vga_vsync        = io_out[3];
-    assign vga_blue         = {io_out[6], io_out[2]};
-    assign vga_green        = {io_out[5], io_out[1]};
-    assign vga_red          = {io_out[4], io_out[0]};
+    assign vga_hsync        = uo_out[7];
+    assign vga_vsync        = uo_out[3];
+    assign vga_blue         = {uo_out[6], uo_out[2]};
+    assign vga_green        = {uo_out[5], uo_out[1]};
+    assign vga_red          = {uo_out[4], uo_out[0]};
 
 `ifdef GL_TEST
     wire VPWR = 1'b1;
