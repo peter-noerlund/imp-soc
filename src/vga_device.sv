@@ -43,7 +43,7 @@ module vga_device
     assign vgaconfig_addr = {vgaconfig_addr_mem, ALIGN_WIDTH'(0)};
 
     always_ff @ (posedge clk) begin
-        ack <= ~rst & wb_cyc & wb_stb & ~ack;
+        ack <= ~rst & wb_cyc & wb_stb;
     end
 
     always_ff @ (posedge clk) begin
