@@ -244,7 +244,7 @@ async def test_csr(dut):
             assert value0 == 0x01000400
         else:
             assert value0 == 0
-        assert value1 == 4
+        assert value1 == 8
         
         (value0, value1) = await rf_read_write(dut, reg, 34)
         if reg == 3:
@@ -262,7 +262,7 @@ async def test_csr(dut):
             assert value0 == 0x01000400
         else:
             assert value0 == 0
-        assert value1 == 4
+        assert value1 == 8
         
         (value0, value1) = await rf_read_write(dut, reg, 34)
         if reg == 3:

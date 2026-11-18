@@ -12,21 +12,18 @@ async def test_soc_vga(dut):
 
     flash = bytearray(16 * 1024 * 1024)
     code = [
-        utils.lui(utils.X5, 0x01000),                   # X5 = 0x01000000
-        utils.addi(utils.X6, utils.X5, 0),              # X6 = X5
-        utils.lui(utils.X7, 0x44440),                   # X7 = 0x44440000
-        utils.addi(utils.X7, utils.X7, 0x030),          # X7 += 0x030 ; X7 = 0x44440030
-        utils.lui(utils.X8, 0x00002),                   # X8 = 0x00001000
-        utils.addi(utils.X8, utils.X8, -2048),          # X8 += 0x800
-        utils.add(utils.X8, utils.X8, utils.X5),        # X8 += X5
-        utils.sw(utils.X6, utils.X7, 0),                # [T1] = T2
-        utils.addi(utils.X6, utils.X6, 4),              # T1 += 4
-        utils.bne(utils.X6, utils.X8, -8),              # if (T1 != T0) goto $-8
-        utils.lui(utils.X9, 0x02000),
-        utils.sw(utils.X9, utils.X5, 12),
-        utils.addi(utils.X10, utils.ZERO, 1),
-        utils.sw(utils.X9, utils.X10, 8),
-        utils.jal(utils.ZERO, 0)                        # j $+0
+        utils.lui(utils.A3, 0x00305),
+        utils.lui(utils.A4, 0x01002),
+        utils.addi(utils.A3, utils.A3, 0x555),
+        utils.addi(utils.A4, utils.A4, -2048),
+        utils.lui(utils.A5, 0x1000),
+        utils.sw(utils.A5, utils.A3, 0),
+        utils.addi(utils.A5, utils.A5, 4),
+        utils.bne(utils.A5, utils.A4, -8),
+        utils.lui(utils.A5, 0x02000),
+        utils.lui(utils.A4, 0x81000),
+        utils.sw(utils.A5, utils.A4, 12),
+        utils.jal(utils.ZERO, 0)
     ]
     for i in range(len(code)):
         instr = code[i]
