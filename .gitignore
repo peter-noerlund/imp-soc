@@ -3,7 +3,7 @@
 __pycache__
 build
 gds_render*
-colorlight/colorlight_pll.v
+colorlight/pll.v
 colorlight/colorlight.json
 colorlight/colorlight_out.config
 colorlight/colorlight.bit

@@ -32,26 +32,11 @@ all: lint
 
 fpga: colorlight/colorlight.svf pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
 
-pico_ice/pico_ice_pll.v:
-	icepll -q -i 48 -o 25.175 -p -m -f $@
+colorlight/pll.v:
+	ecppll -i 25 -o 65 -f colorlight/pll.v
 
-pico_ice/pico_ice.json: $(VERILOG_SOURCES) pico_ice/pico_ice_top.sv pico_ice/pico_ice_pll.v
-	yosys -q -p "synth_ice40 -device u -top pico_ice_top -dff -retime -noabc9 -abc2 -json $@" -DFPGA -DPICO_ICE -l pico_ice/pico_ice.log $^
-
-pico_ice/pico_ice.asc: pico_ice/pico_ice.pcf pico_ice/pico_ice.json
-	nextpnr-ice40 -q --up5k --package sg48 --freq 25.175 --asc $@ --json pico_ice/pico_ice.json --pcf pico_ice/pico_ice.pcf
-
-pico_ice/pico_ice.bin: pico_ice/pico_ice.asc
-	icepack $^ $@
-
-pico_ice/pico_ice_timing.txt: pico_ice/pico_ice.asc pico_ice/pico_ice.pcf
-	icetime -p pico_ice/pico_ice.pcf -r $@ -d up5k -c 25.175 pico_ice/pico_ice.asc
-
-colorlight/colorlight_pll.v:
-	ecppll -i 25 -o 65 -f colorlight/colorlight_pll.v
-
-colorlight/colorlight.json: $(VERILOG_SOURCES) colorlight/colorlight_top.sv colorlight/colorlight_pll.v
-	yosys -q -p "synth_ecp5 -top colorlight_top -json $@" -DFPGA -DCOLORLIGHT -l colorlight/colorlight.log $^
+colorlight/colorlight.json: $(VERILOG_SOURCES) colorlight/colorlight_top.sv colorlight/pll.v
+	yosys -q -p "synth_ecp5 -top colorlight_top -json $@; write_verilog colorlight_top.v" -DFPGA -DCOLORLIGHT -l colorlight/colorlight.log $^
 
 colorlight/colorlight_out.config: colorlight/colorlight.json
 	nextpnr-ecp5 --25k --package CABGA381 --speed 6 --json $^ --textcfg $@ --lpf colorlight/colorlight.lpf --freq 65
@@ -77,10 +62,10 @@ program-colorlight: colorlight/colorlight.svf
 lint:
 	verilator --lint-only -Wall $(VERILOG_SOURCES)
 
-lint-fpga:
-	verilator --lint-only -Wall -DFPGA -DCOLORLIGHT $(VERILOG_SOURCES)
+lint-colorlight: colorlight/pll.v
+	verilator --lint-only -Wall -DFPGA -DCOLORLIGHT --top colorlight_top $(VERILOG_SOURCES) colorlight/colorlight_top.sv colorlight/mock/pll.v colorlight/mock/BB.v
 
 test:
 	$(MAKE) -C test
 
-.PHONY: all fpga harden lint test
+.PHONY: all fpga harden lint lint-colorlight test
