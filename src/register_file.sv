@@ -38,7 +38,7 @@ module register_file
     );
 
     localparam int COUNTER_WIDTH = $clog2(32 / W);
-    localparam [COUNTER_WIDTH - 1 : 0] COUNTER_MAX = 32 / W - 1;
+    localparam [COUNTER_WIDTH - 1 : 0] COUNTER_MAX = COUNTER_WIDTH'(32 / W - 1);
 
     logic [31:0] regs [13:0];
     logic [COUNTER_WIDTH - 1 : 0] cnt;
