@@ -8,8 +8,9 @@ module soc
         parameter [0:0] ENABLE_VGA_DEVICE=1,
         parameter [0:0] ENABLE_RAW_INPUT=1,
         parameter [1:0] GAMEPAD_COUNT=2,
-        parameter [0:0] ENABLE_4BIT=0,
-        parameter [0:0] ENABLE_COMPRESSED=0
+        parameter [0:0] ENABLE_4BIT=1,
+        parameter [0:0] ENABLE_COMPRESSED=0,
+        parameter [0:0] DEBUG=0
     )
     (
         input wire clk,
@@ -99,7 +100,7 @@ module soc
 
     wire irq;
 
-    cpu #(.ENABLE_4BIT(ENABLE_4BIT), .ENABLE_COMPRESSED(ENABLE_COMPRESSED)) cpu(
+    cpu #(.ENABLE_4BIT(ENABLE_4BIT), .ENABLE_COMPRESSED(ENABLE_COMPRESSED), .DEBUG(DEBUG)) cpu(
         .clk(clk),
         .rst(rst),
 
