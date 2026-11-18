@@ -61,11 +61,21 @@ module cpu
     wire dbus_ack; 
     wire [31:0] dbus_rdt;
 
+    // Extension interface
+    wire [2:0] ext_funct3;
+    wire ext_ready;
+    wire [31:0] ext_rd;
+    wire [31:0] ext_rs1;
+    wire [31:0] ext_rs2;
+    wire mdu_valid;
+
     assign wb_cti = 3'b000;
     assign wb_bte = 2'b00;
     assign wb_cyc = wb_stb;
+
+    assign ext_ready = 1'b0;
+    assign ext_rd = 32'h00000000;
     
-    /* verilator lint_off PINMISSING */
     serv_top #(.WITH_CSR(1), .W(W), .RESET_PC(32'h00000000), .COMPRESSED(ENABLE_COMPRESSED), .DEBUG(DEBUG)) serv(
         .clk(clk),
         .i_rst(rst),
@@ -102,10 +112,15 @@ module cpu
         .i_dbus_ack(dbus_ack),
 
         // Extension interface
-        .i_ext_ready(1'b0),
-        .i_ext_rd(32'h00000000)
+        .o_ext_funct3(ext_funct3),
+        .i_ext_ready(ext_ready),
+        .i_ext_rd(ext_rd),
+        .o_ext_rs1(ext_rs1),
+        .o_ext_rs2(ext_rs2),
+
+        // MDU
+        .o_mdu_valid(mdu_valid)
     );
-    /* verilator lint_on PINMISSING */
    
     register_file #(.W(W), .DEBUG(DEBUG)) rf(
         .clk(clk),
@@ -148,4 +163,6 @@ module cpu
         .i_wb_mem_rdt(wb_rdt),
         .i_wb_mem_ack(wb_ack | wb_rty | wb_err)
     );
+
+    wire _unused = &{ext_funct3, ext_rs1, ext_rs2, mdu_valid};
 endmodule
