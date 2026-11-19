@@ -22,7 +22,6 @@ module colorlight_top
 
     wire clk;
     wire clk_locked;
-    wire rst;
 
     // VGA
     wire vga_vsync;
@@ -47,9 +46,9 @@ module colorlight_top
     wire [7:0] p3_pmod2_oe;
     wire [7:0] p3_pmod2_out;
 
-    assign rst = ~clk_locked;
-
-    assign LED = rst;
+    // Reset
+    bit [3:0] rst_cnt;
+    bit rst;
 
     // VGA
     assign P3_PMOD1 = {
@@ -68,6 +67,23 @@ module colorlight_top
         spi_flash_ss_n
     };
     assign spi_sio_in = {p3_pmod2_in[5:4], p3_pmod2_in[2:1]};
+
+    assign LED = rst;
+
+    initial begin
+        rst = 1'b1;
+        rst_cnt = 4'd0;
+    end
+
+    always_ff @ (posedge clk) begin
+        if (clk_locked) begin
+            if (rst_cnt == 4'd15) begin
+                rst <= 1'b0;
+            end else begin
+                rst_cnt <= rst_cnt + 4'd1;
+            end
+        end
+    end
 
     pll pll(
         .clkin(clk25),

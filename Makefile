@@ -36,7 +36,7 @@ colorlight/pll.v:
 	ecppll -i 25 -o 65 -f colorlight/pll.v
 
 colorlight/colorlight.json: $(VERILOG_SOURCES) colorlight/colorlight_top.sv colorlight/pll.v
-	yosys -q -p "synth_ecp5 -top colorlight_top -json $@; write_verilog colorlight_top.v" -DFPGA -DCOLORLIGHT -l colorlight/colorlight.log $^
+	yosys -q -p "synth_ecp5 -top colorlight_top -json $@" -DFPGA -DCOLORLIGHT -l colorlight/colorlight.log $^
 
 colorlight/colorlight_out.config: colorlight/colorlight.json
 	nextpnr-ecp5 --25k --package CABGA381 --speed 6 --json $^ --textcfg $@ --lpf colorlight/colorlight.lpf --freq 65
