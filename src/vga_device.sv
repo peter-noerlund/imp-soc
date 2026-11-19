@@ -5,7 +5,7 @@ module vga_device
     #(
         parameter int ADDR_WIDTH=31,
         parameter int DATA_WIDTH=32,
-        parameter int ALIGN_WIDTH=14
+        parameter int ALIGN_WIDTH=13
     )
     (
         input wire clk,

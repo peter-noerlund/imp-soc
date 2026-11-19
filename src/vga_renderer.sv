@@ -2,7 +2,8 @@
 
 module vga_renderer
     #(
-        parameter int CHUNK_COUNT=16
+        parameter int CHUNK_COUNT=16,
+        parameter int LINE_HEIGHT=8
     )
     (
         input wire clk,
@@ -11,6 +12,7 @@ module vga_renderer
         input wire vgaconfig_enabled,
 
         output wire vgactrl_read_req,
+        output wire vgactrl_reset_req,
         input wire [CHUNK_COUNT * 28 - 1 : 0] vgactrl_memory,
 
         //! @virtualbus VGA @dir output VGA
@@ -23,23 +25,17 @@ module vga_renderer
     );
 
 
-`ifdef PICO_ICE
-    // PICO-ICE runs 512x384 on a 640x480@60Hz screen
-    localparam int HPIXELS = 512;
-    localparam int VPIXELS = 384;
-    localparam int HPOS_WIDTH = 10;     // 800 actual horizontal pixels
-`else // PICO_ICE
-    // TT runs 1024x768 on a 1024x768@60Hz screen
     localparam int HPIXELS = 1024;
     localparam int VPIXELS = 768;
     localparam int HPOS_WIDTH = 11;     // 1338 actual horizontal pixels
-`endif // PICO_ICE
     localparam int VPOS_WIDTH = 10;
     localparam int PIXEL_COUNT = CHUNK_COUNT * 8;
     localparam int SUBPIXEL_WIDTH = HPIXELS / PIXEL_COUNT;
     localparam int SUBPIXEL_IDX_WIDTH = $clog2(SUBPIXEL_WIDTH);
     localparam int CHUNK_IDX_WIDTH = $clog2(CHUNK_COUNT);
     localparam int PIXEL_IDX_WIDTH = 3;
+    localparam int SUBLINE_IDX_WIDTH = $clog2(LINE_HEIGHT);
+    localparam int SUBLINE_MAX = LINE_HEIGHT - 1;
 
     wire [HPOS_WIDTH - 1 : 0] h_pos;
     wire [VPOS_WIDTH - 1 : 0] v_pos;
@@ -77,6 +73,7 @@ module vga_renderer
     wire [CHUNK_IDX_WIDTH - 1 : 0] chunk_idx;       // Index of current chunk
     wire [PIXEL_IDX_WIDTH - 1 : 0] pixel_idx;       // Index of current pixel
     wire [SUBPIXEL_IDX_WIDTH - 1 : 0] subpixel_idx; // Index of current subpixel
+    wire [SUBLINE_IDX_WIDTH - 1 : 0] subline_idx;   // Index within current line
 
     int i;
 
@@ -114,6 +111,7 @@ module vga_renderer
     assign subpixel_idx = h_pos[SUBPIXEL_IDX_WIDTH - 1 : 0];
     assign pixel_idx = h_pos[PIXEL_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : SUBPIXEL_IDX_WIDTH];
     assign chunk_idx = h_pos[CHUNK_IDX_WIDTH + PIXEL_IDX_WIDTH + SUBPIXEL_IDX_WIDTH - 1 : PIXEL_IDX_WIDTH + SUBPIXEL_IDX_WIDTH];
+    assign subline_idx = v_pos[SUBLINE_IDX_WIDTH - 1 : 0];
 
     assign black = 6'b000000;
     assign color2 = chunk[27:22];
@@ -137,7 +135,8 @@ module vga_renderer
     assign vga_blue = blank ? 2'b00 : blue;
     assign vga_hsync = h_sync;
     assign vga_vsync = v_sync;
-    assign vgactrl_read_req = h_pos == HPOS_WIDTH'(HPIXELS - 1) && subpixel_idx == SUBPIXEL_IDX_WIDTH'(SUBPIXEL_WIDTH - 1) && active && vgaconfig_enabled;
+    assign vgactrl_read_req = h_pos == HPOS_WIDTH'(HPIXELS - 1) && subpixel_idx == SUBPIXEL_IDX_WIDTH'(SUBPIXEL_WIDTH - 1) && subline_idx == SUBLINE_IDX_WIDTH'(SUBLINE_MAX) && active && vgaconfig_enabled;
+    assign vgactrl_reset_req = h_pos == HPOS_WIDTH'(HPIXELS - 1) && subpixel_idx == SUBPIXEL_IDX_WIDTH'(SUBPIXEL_WIDTH - 1) && v_pos == VPOS_WIDTH'(0);
 
     always_comb begin
         chunk = 28'h0000000;
@@ -160,34 +159,6 @@ module vga_renderer
         end
     end
 
-`ifdef PICO_ICE
-    // PICO-ICE runs at 25.075 MHz and outputs VGA 640x480 at 60Hz, but letter boxed to 512x384
-    vga_timing #(
-        .H_PIXELS(512),
-        .V_PIXELS(384),
-        .H_RIGHT_BORDER(8 + 128),
-        .H_FRONT_PORCH(8),
-        .H_SYNC_TIME(96),
-        .H_BACK_PORCH(40),
-        .H_LEFT_BORDER(8),
-        .V_BOTTOM_BORDER(8 + 96),
-        .V_FRONT_PORCH(2),
-        .V_SYNC_TIME(2),
-        .V_BACK_PORCH(25),
-        .V_TOP_BORDER(8),
-        .H_SYNC_POLARITY(0),
-        .V_SYNC_POLARITY(0)
-    ) timing (
-        .clk(clk),
-        .rst(rst),
-        .vga_hpos(h_pos),
-        .vga_vpos(v_pos),
-        .vga_hsync(h_sync),
-        .vga_vsync(v_sync),
-        .vga_blank(blank)
-    );
-`else // PICO_ICE
-    // ASIC runs at 65 MHz and outputs VESA 1024x768 at 60Hz
     vga_timing timing(
         .clk(clk),
         .rst(rst),
@@ -197,7 +168,6 @@ module vga_renderer
         .vga_vsync(v_sync),
         .vga_blank(blank)
     );
-`endif // PICO_ICE
 
     wire _unused = &{sum_red[0], sum_green[0], sum_blue[0]};
 endmodule

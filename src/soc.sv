@@ -322,6 +322,7 @@ module soc
             wire [24:0] vgaconfig_addr;
 
             wire vgactrl_read_req;
+            wire vgactrl_reset_req;
             wire [447:0] vgactrl_memory;
 
             // VGA Memory bus
@@ -409,6 +410,7 @@ module soc
 
                 .vgaconfig_addr(vgaconfig_addr),
                 .vgactrl_read_req(vgactrl_read_req),
+                .vgactrl_reset_req(vgactrl_reset_req),
                 .vgactrl_memory(vgactrl_memory),
 
                 .wb_cyc(wb_vga_cyc),
@@ -432,6 +434,7 @@ module soc
                 .vgaconfig_enabled(vgaconfig_enabled),
 
                 .vgactrl_read_req(vgactrl_read_req),
+                .vgactrl_reset_req(vgactrl_reset_req),
                 .vgactrl_memory(vgactrl_memory),
 
                 .vga_hsync(vga_hsync),

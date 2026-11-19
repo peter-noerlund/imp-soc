@@ -28,6 +28,7 @@ module vga_memory
         /* verilator lint_on UNUSEDSIGNAL */
 
         input wire vgactrl_read_req,                            //! Read line request
+        input wire vgactrl_reset_req,                           //! Reset line counter
         output wire [WORD_COUNT * 28 - 1 : 0] vgactrl_memory,   //! Memory
 
         //! @virtualbus WB @dir output Wishbone bus
@@ -101,7 +102,7 @@ module vga_memory
 
     // Line index
     always_ff @ (posedge clk) begin
-        if (rst) begin
+        if (rst || vgactrl_reset_req) begin
             line_idx <= LINE_WIDTH'(1);
         end else if (ack && last_word) begin
             if (line_idx == LINE_WIDTH'(LINE_COUNT - 1)) begin
