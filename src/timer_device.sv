@@ -51,7 +51,7 @@ module timer_device
     always_ff @ (posedge clk) begin
         if (rst) begin
             irq <= 1'b0;
-        end else if (wb_cyc & wb_stb & wb_we & ~ack) begin
+        end else if (wb_cyc & wb_stb & wb_we) begin
             irq <= 1'b0;
         end else if (counter == COUNTER_WIDTH'(1)) begin
             irq <= 1'b1;
@@ -59,7 +59,7 @@ module timer_device
     end
 
     always_ff @ (posedge clk) begin
-        ack <= ~rst & wb_cyc & wb_stb & ~ack;
+        ack <= ~rst & wb_cyc & wb_stb;
     end
 
     wire _unused = &{wb_adr, wb_sel, wb_cti, wb_bte};
