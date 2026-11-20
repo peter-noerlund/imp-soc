@@ -42,6 +42,7 @@ module memory_device
         output wire spi_psram_ss_n
     );
 
+    localparam [2:0] CTI_CLASSIC = 3'b000;
     localparam [2:0] CTI_INCREMENT = 3'b010;
 
     localparam [1:0] BTE_LINEAR = 2'b00;
@@ -281,12 +282,12 @@ module memory_device
             if (!sck) begin
                 if (state == 5'd29 && wb_cti == CTI_INCREMENT && wb_bte == BTE_LINEAR) begin
                     state <= 5'd22;
-                end else begin
+                end else if (state != 5'd31) begin
                     state <= state + 5'd1;
                 end
             end
 
-            if (ack) begin
+            if (ack && wb_cti != CTI_CLASSIC) begin
                 ack <= 1'b0;
             end
         end
