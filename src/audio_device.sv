@@ -72,7 +72,7 @@ module audio_device
     end
 
     always_ff @ (posedge clk) begin
-        ack <= ~rst & wb_cyc & wb_stb & ~ack;
+        ack <= ~rst & wb_cyc & wb_stb;
     end
 
     always_ff @ (posedge clk) begin
