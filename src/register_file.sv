@@ -5,6 +5,27 @@
 
   All registers shifts every cycle, so the register_file only accepts requests the ring
   is at the correct position.
+
+  The protocol is as follows:
+
+  For a read/write operation:
+
+  Cycle 0: CPU asserts rf_rreq
+  Cycle 1: CPU presents registers on rf_rreg0 and rf_rreg1
+  Cycle n: Register file asserts rf_ready. This must happend _after_ cycle 1
+  Cycle n+1: Bit/nibbles are read/written
+
+  For a write-only operation:
+
+  Cycle 0: CPU asserts rf_wreq
+  Cycle 0+: Register file asserts rf_ready. This can happen at cycle 0
+  Cycle 1+: Bit/nibbles are written
+
+  Note that for optimal flow, rf_ready is asserted at the same time as rf_wreq
+
+  This particular register file is a ring buffer, so it only works every 32/8 cycles (depending on mode).
+  So rf_rreq will be saved as a pending_req and acted upon when possible
+  rf_wreq is acted on immediately if ring is at its end, but otherwise it is saved as a pending_req
   */
 module register_file
     #(
@@ -57,7 +78,7 @@ module register_file
     assign rreg1 = rf_rreg1[3:0];
     assign wreg0 = {rf_wreg0[5], rf_wreg0[3:0]};
 
-    assign rf_ready = ~rst & (rf_wreq | rf_rreq | pending_req) & (cnt == COUNTER_MAX);
+    assign rf_ready = ~rst & (rf_wreq | pending_req) & (cnt == COUNTER_MAX);
     assign rf_rdata0 = regout[rreg0];
     assign rf_rdata1 =
         rreg1_meip ? regout_meip :
@@ -107,9 +128,9 @@ module register_file
     always_ff @ (posedge clk) begin
         if (rst) begin
             pending_req <= 1'b0;
-        end else if ((rf_rreq || rf_wreq) && cnt != COUNTER_MAX) begin
+        end else if (rf_rreq || (rf_wreq && cnt != COUNTER_MAX)) begin
             pending_req <= 1'b1;
-        end else if (pending_req && cnt == COUNTER_WIDTH'(0)) begin
+        end else if (pending_req && cnt == COUNTER_MAX) begin
             pending_req <= 1'b0;
         end
     end
