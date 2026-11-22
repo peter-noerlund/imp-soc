@@ -140,11 +140,8 @@ async def wishbone_bus(dut, flash: list, ram: list, ram_address: int = 0x1000000
 
     while True:
         await ClockCycles(dut.clk, 1)
-        if dut.wb_cyc.value == 0 or dut.wb_stb.value == 0 or dut.wb_ack.value == 1:
-            dut.wb_ack.value = 0
-            continue
 
-        if dut.rst.value != 0:
+        if dut.rst.value != 0 or dut.wb_cyc.value == 0 or dut.wb_stb.value == 0:
             dut.wb_ack.value = 0
             continue
 
@@ -175,6 +172,11 @@ async def wishbone_bus(dut, flash: list, ram: list, ram_address: int = 0x1000000
             dut.wb_rdt.value = 0
 
         dut.wb_ack.value = 1
+
+        await First(FallingEdge(dut.wb_cyc), FallingEdge(dut.wb_stb))
+
+        dut.wb_ack.value = 0
+
 
 
 async def memory_device(dut, ss_n, memory: bytearray):
