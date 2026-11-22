@@ -9,6 +9,7 @@ _init:
     .org 8
     .globl _interrupt_vector
     .type _interrupt_vector, @function
+    .align 2
 _interrupt_vector:
     j _interrupt_handler
 
@@ -16,6 +17,7 @@ _interrupt_vector:
 
     .globl _interrupt_handler
     .type _interrupt_handler, @function
+    .align 2
 _interrupt_handler:
     # gp is hardcoded to 0x01000400 and the range 0x01000000 - 0x010007FF is reserved for this purpose
     sw x1, -1024(gp)

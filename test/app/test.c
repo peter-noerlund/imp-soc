@@ -17,7 +17,6 @@
 #define MIE_TIMER 0x80
 
 static volatile unsigned int s_timer_counter = 0;
-static volatile unsigned int s_timer_threshold = 0;
 
 static volatile uint32_t* s_devices = (volatile uint32_t*)0x02000000;
 
@@ -30,10 +29,8 @@ static void arm_timer()
 
 void interrupt_handler()
 {
-    if (++s_timer_counter < s_timer_threshold)
-    {
-        arm_timer();
-    }
+    ++s_timer_counter;
+    arm_timer();
 }
 
 static void fill_screen(uint32_t* screen_buffer, uint32_t value)
@@ -47,12 +44,11 @@ static void fill_screen(uint32_t* screen_buffer, uint32_t value)
 static void wait_two_frames()
 {
     // 60 Hz is 16.67ms
-    s_timer_counter = 0;
-    s_timer_threshold = 7;
+    unsigned int timeout = s_timer_counter + 5;
 
     arm_timer();
 
-    while (s_timer_counter < s_timer_threshold);
+    while (s_timer_counter < timeout);
 }
 
 inline void set_csr_flags(uint16_t csr, uint32_t flags)
@@ -62,7 +58,6 @@ inline void set_csr_flags(uint16_t csr, uint32_t flags)
 
 int main()
 {
-    set_csr_flags(CSR_MTVEC, 0x8);
     set_csr_flags(CSR_MIE, MIE_TIMER);
     set_csr_flags(CSR_MSTATUS, MSTATUS_MIE);
 
@@ -74,10 +69,10 @@ int main()
     }
     uint32_t* screen_buffer = (uint32_t*)ptr;
 
-    s_devices[DEVICE_VIDEO] = (uint32_t)screen_buffer | 0x80000000;
 
     // Create all red screen
     fill_screen(screen_buffer, 0x00305555);
+    s_devices[DEVICE_VIDEO] = (uint32_t)screen_buffer | 0x80000000;
     wait_two_frames();
 
     // Create all green screen

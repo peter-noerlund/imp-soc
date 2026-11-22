@@ -21,6 +21,6 @@ src/config_merged.json
 src/user_config.json
 sim_build
 summary.md
-*.bin
 *.elf
-*.fst
+*.fst*
+*.swp

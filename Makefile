@@ -27,7 +27,7 @@ VERILOG_SOURCES=\
 	src/wb_interconnect.sv \
 	src/write_aligner.sv
 
-all: lint
+all: colorlight/colorlight.svf
 
 fpga: colorlight/colorlight.svf pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
 
