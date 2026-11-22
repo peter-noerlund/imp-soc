@@ -20,14 +20,6 @@
   "SYNTH_ABC_BUFFERING": false,
   "SYNTH_SIZING": false,
   "SYNTH_AUTONAME": true,
-  "SYNTH_PARAMETERS": [
-    "ENABLE_TIMER_DEVICE=1",
-    "ENABLE_INPUT_DEVICE=1",
-    "ENABLE_AUDIO_DEVICE=1",
-    "GAMEPAD_COUNT=2",
-    "ENABLE_RAW_INPUT=1",
-    "ENABLE_4BIT=1"
-  ],
   "SYNTH_HIERARCHY_MODE": "flatten",
 
   "//": "Placement",

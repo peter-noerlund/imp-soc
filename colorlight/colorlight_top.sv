@@ -11,15 +11,6 @@ module colorlight_top
         input wire [7:0] P2_PMOD1
     );
 
-    localparam int ENABLE_TIMER_DEVICE = 1;
-    localparam int ENABLE_INPUT_DEVICE = 1;
-    localparam int ENABLE_AUDIO_DEVICE = 1;
-    localparam int ENABLE_VGA_DEVICE = 1;
-    localparam int ENABLE_RAW_INPUT = 1;
-    localparam int GAMEPAD_COUNT = 2;
-    localparam int ENABLE_4BIT = 1;
-    localparam int ENABLE_COMPRESSED = 0;
-
     wire clk;
     wire clk_locked;
 
@@ -98,16 +89,7 @@ module colorlight_top
         .I(p3_pmod2_out)
     );
 
-    soc #(
-        .ENABLE_TIMER_DEVICE(ENABLE_TIMER_DEVICE),
-        .ENABLE_INPUT_DEVICE(ENABLE_INPUT_DEVICE),
-        .ENABLE_AUDIO_DEVICE(ENABLE_AUDIO_DEVICE),
-        .ENABLE_VGA_DEVICE(ENABLE_VGA_DEVICE),
-        .ENABLE_RAW_INPUT(ENABLE_RAW_INPUT),
-        .GAMEPAD_COUNT(GAMEPAD_COUNT),
-        .ENABLE_4BIT(ENABLE_4BIT),
-        .ENABLE_COMPRESSED(ENABLE_COMPRESSED)
-    ) soc(
+    soc #(.DEBUG(0)) soc(
         .clk(clk),
         .rst(rst),
 

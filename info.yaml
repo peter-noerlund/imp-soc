@@ -20,7 +20,6 @@ project:
     - tt_um_pchri03_imp_soc.v
     - audio_device.sv
     - cpu.sv
-    - dummy_device.sv
     - input_device.sv
     - memory_device.sv
     - register_file.sv

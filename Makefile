@@ -1,7 +1,6 @@
 VERILOG_SOURCES=\
 	src/audio_device.sv \
 	src/cpu.sv \
-	src/dummy_device.sv \
 	src/input_device.sv \
 	src/memory_device.sv \
 	src/register_file.sv \

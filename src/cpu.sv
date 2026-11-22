@@ -2,9 +2,9 @@
 
 module cpu
     #(
-        parameter [0:0] ENABLE_4BIT=0,
+        parameter [0:0] ENABLE_4BIT=1,
         parameter [0:0] ENABLE_COMPRESSED=0,
-        parameter [0:0] DEBUG=0
+        parameter [0:0] DEBUG=1
     )
     (
         input wire clk,
