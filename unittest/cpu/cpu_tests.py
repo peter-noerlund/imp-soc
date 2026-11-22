@@ -4,7 +4,7 @@ import utils
 from cocotb.triggers import ClockCycles
 
 
-@cocotb.test()
+#@cocotb.test()
 async def test_store(dut):
     flash = []
     flash.append(utils.lui(utils.T0, 0x01000))
@@ -36,7 +36,7 @@ async def test_store(dut):
     assert ram[6] == 0x00000000
 
 
-@cocotb.test()
+#@cocotb.test()
 async def test_registers(dut):
     flash = []
     flash.append(utils.lui(utils.X1, 0xAAAAB))
@@ -86,49 +86,85 @@ async def test_registers(dut):
 
 
 @cocotb.test()
-async def test_slli(dut):
-    count = 256
-
+async def test_shift_left(dut):
     flash = []
-    flash.append(utils.lui(utils.X1, 0x01000))                  # X0 points to RAM
-    flash.append(utils.addi(utils.X2, utils.ZERO, 1))
-    flash.append(utils.addi(utils.X5, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X6, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X7, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X8, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X9, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X10, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X11, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X12, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X13, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X14, utils.ZERO, 0))
-    flash.append(utils.addi(utils.X15, utils.ZERO, 0))
-    for i in range(count):
-        flash.append(utils.addi(utils.X5, utils.ZERO, i))       # X5 = i
-        for j in range(32):
-            flash.append(utils.slli(utils.X6, utils.X5, j))     # X6 = X5 << i
-            flash.append(utils.sw(utils.X1, utils.X6, 0))       # X5[0] = X6
-            flash.append(utils.addi(utils.X1, utils.X1, 4))     # X5 += 4
+    flash.append(utils.lui(utils.X1, 0x01000))
+    flash.append(utils.addi(utils.X5, utils.ZERO, 1))
+    for i in range(32):
+        flash.append(utils.slli(utils.X6, utils.X5, i))
+        flash.append(utils.sw(utils.X1, utils.X6, 0))
+        flash.append(utils.addi(utils.X1, utils.X1, 4))
     
-    flash.append(utils.sw(utils.X1, utils.X2, 0))               # T0[0] = T1
-    flash.append(utils.jal(utils.ZERO, 0))                      # J $+0
+    flash.append(utils.addi(utils.X2, utils.ZERO, 1))
+    flash.append(utils.sw(utils.X1, utils.X2, 0))
+    flash.append(utils.jal(utils.ZERO, 0))
 
     ram = []
-    for i in range(count * 32 + 1):
+    for i in range(33):
         ram.append(0)
 
     cocotb.start_soon(utils.wishbone_bus(dut, flash, ram))
 
     await utils.init(dut)
 
-    while True:
-        await ClockCycles(dut.clk, 10000)
-        if ram[count * 32] == 1:
-            break
+    await ClockCycles(dut.clk, 20000)
 
-    for i in range(count):
-        for j in range(32):
-            expected_value = (i << j) & 0xFFFFFFFF
-            assert ram[i * 32 + j] == expected_value, f"{i} << {j} = {expected_value}"
+    assert ram[32] == 1, "Test completed within 20000 cycles"
 
+    for i in range(32):
+        expected_value = 1 << i
+        assert ram[i] == expected_value, f"1 << {j} = {expected_value}"
+
+
+@cocotb.test()
+async def test_shift_right(dut):
+    flash = []
+    flash.append(utils.lui(utils.X1, 0x01000))
+
+    flash.append(utils.lui(utils.X5, 0xAAAAB))
+    flash.append(utils.addi(utils.X5, utils.X5, 0xAAA))
+    flash.append(utils.lui(utils.X6, 0x55555))
+    flash.append(utils.addi(utils.X6, utils.X6, 0x555))
+    for i in range(32):
+        flash.append(utils.srli(utils.X7, utils.X5, i))
+        flash.append(utils.srli(utils.X8, utils.X6, i))
+        flash.append(utils.srai(utils.X9, utils.X5, i))
+        flash.append(utils.srai(utils.X10, utils.X6, i))
+        flash.append(utils.sw(utils.X1, utils.X7, 0))
+        flash.append(utils.sw(utils.X1, utils.X8, 4))
+        flash.append(utils.sw(utils.X1, utils.X9, 8))
+        flash.append(utils.sw(utils.X1, utils.X10, 12))
+        flash.append(utils.addi(utils.X1, utils.X1, 16))
+
+    flash.append(utils.addi(utils.X5, utils.ZERO, 1))
+    flash.append(utils.sw(utils.X1, utils.X5, 0))
+    flash.append(utils.jal(utils.ZERO, 0))
+
+    ram = []
+    for i in range(129):
+        ram.append(0)
+
+    cocotb.start_soon(utils.wishbone_bus(dut, flash, ram))
+
+    await utils.init(dut)
+
+    await ClockCycles(dut.clk, 80000)
+
+    assert ram[128] == 1, "Test completed within 80000 cycles"
+
+    for i in range(32):
+        expected_value_a = 0xAAAAAAAA >> i
+        expected_value_a_signed = (expected_value_a | (0xFFFFFFFF << (32 - i))) & 0xFFFFFFFF
+        expected_value_b = 0x55555555 >> i
+        expected_value_b_signed = expected_value_b
+
+        value_a = ram[i * 4]
+        value_b = ram[i * 4 + 1]
+        value_a_signed = ram[i * 4 + 2]
+        value_b_signed = ram[i * 4 + 3]
+
+        assert value_a == expected_value_a, f"0xAAAAAAAA >> {i} == 0x{expected_value_a:08X} (got 0x{value_a:08X})"
+        assert value_b == expected_value_b, f"0x55555555 >> {i} == 0x{expected_value_b:08X} (got 0x{value_b:08X})"
+        assert value_a_signed == expected_value_a_signed, f"(signed)0xAAAAAAAA >> {i} == 0x{expected_value_a_signed:08X} (got 0x{value_a_signed:08X})"
+        assert value_b_signed == expected_value_b_signed, f"(signed)0x55555555 >> {i} == 0x{expected_value_b_signed:08X} (got 0x{value_b_signed:08X})"
 

@@ -14,8 +14,8 @@ VERILOG_SOURCES =  \
     $(CURDIR)/../../src/serv/rtl/serv_bufreg2.v \
     $(CURDIR)/../../src/serv/rtl/serv_csr.v \
     $(CURDIR)/../../src/serv/rtl/serv_ctrl.v \
-    $(CURDIR)/../../src/serv/rtl/serv_decode.v \
     $(CURDIR)/../../src/serv/rtl/serv_debug.v \
+    $(CURDIR)/../../src/serv/rtl/serv_decode.v \
     $(CURDIR)/../../src/serv/rtl/serv_immdec.v \
     $(CURDIR)/../../src/serv/rtl/serv_mem_if.v \
     $(CURDIR)/../../src/serv/rtl/serv_rf_if.v \
@@ -31,7 +31,7 @@ TOPLEVEL = cpu
 # The Python modules which contain your testcases.
 # The current directory is included in the Python path,
 # so you can just specify the module name without the .py extension.
-MODULE = cpu_tests
+COCOTB_TEST_MODULES = cpu_tests
 
 # Enable waveform generation.
 WAVES = 1

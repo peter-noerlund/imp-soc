@@ -3,4 +3,4 @@
 	url = https://github.com/TinyTapeout/tt-support-tools
 [submodule "src/serv"]
 	path = src/serv
-	url = https://github.com/olofk/serv.git
+	url = https://github.com/peter-noerlund/serv.git
