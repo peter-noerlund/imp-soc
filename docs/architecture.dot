@@ -1,0 +1,44 @@
+digraph architecture {
+    splines=ortho;
+    nodesep=0.75;
+    ranksep=0.75;
+
+    node [ fontname="arial" fontsize="8" shape="rect" ];
+    edge [ fontname="arial" fontsize="8" ];
+
+    cpu [ label="RISC-V CPU\n(QERV)" ];
+
+    interconnect [ label="Wishbone interconnect" ];
+
+    subgraph devices {
+        rank=same;
+
+        timer_device [ label="Timer device" ];
+        input_device [ label="Input device" ];
+        audio_device [ label="Audio device" ];
+        video_device [ label="Video device" ];
+        arbiter [ label="Wishbone arbiter" ];
+    }
+
+    memory_device [ label="Memory device" ];
+
+    subgraph external {
+        rank=same;
+
+        qspi_pmod [ label="QSPI PMOD" ];
+        tinyvga_pmod [ label="TinyVGA PMOD" ];
+        audio_pmod [ label="Audio PMOD" ];
+        gamepad_pmod [ label="Gamepad PMOD" ];
+        input_pmod [ label="input PMOD" ];
+    }
+
+    cpu -> interconnect;
+    interconnect -> timer_device;
+    interconnect -> input_device -> gamepad_pmod;
+    input_device -> input_pmod;
+    interconnect -> audio_device -> audio_pmod;
+    interconnect -> video_device -> tinyvga_pmod;
+    interconnect -> arbiter;
+    video_device -> arbiter;
+    arbiter -> memory_device -> qspi_pmod;
+}
