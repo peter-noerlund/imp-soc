@@ -1,6 +1,6 @@
 # Tiny Tapeout project information
 project:
-  title:        "Imp SOC"                                   # Project title
+  title:        "Imp SoC"                                   # Project title
   author:       "Peter Nørlund"                               # Your name
   discord:      "pchri03."                                    # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "The smallest possible SoC which can still run DOOM"    # One line description of what your project does
