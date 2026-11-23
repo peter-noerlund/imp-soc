@@ -114,8 +114,6 @@ module memory_device
             ss_n <= 1'b1;
         end else begin
             if (!ss_n) begin
-                // FIXME: Currently, we are setting the clock high at the last nibble,
-                // which actually causes the device to continue to next byte just before termination
                 sck <= ~sck;
             end
 
