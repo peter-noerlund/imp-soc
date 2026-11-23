@@ -121,7 +121,7 @@ async def test_memory_device(dut):
     flash = bytearray(16 * 1024 * 1024)
     for i in range(16 * 1024 * 1024):
         flash[i] = random.randrange(256)
-    cocotb.start_soon(memory_device(dut, dut.spi_flash_ss_n, flash))
+    cocotb.start_soon(memory_device(dut, dut.spi_flash_ss_n, flash, can_cont_mode=True))
 
     psram = bytearray(8 * 1024 * 1024)
     for i in range(8 * 1024 * 1024):

@@ -69,20 +69,25 @@ module memory_device
     // Other
     bit [4:0] state;
 
+    bit flash_in_cont_mode;
+
     wire [7:0] command;
     wire [7:0] read_command;
     wire [7:0] write_command;
+    wire is_flash;
 
     assign wb_ack = ack && !rst && wb_cyc && wb_stb;
     assign wb_rty = 1'b0;
     assign wb_err = 1'b0;
     assign wb_rdt = rdt;
 
+    assign is_flash = ~wb_adr[24];
+
     assign spi_sck = sck;
     assign spi_sio_out = sio_out;
     assign spi_sio_oe = {sio_oe_write_quad, sio_oe_write_quad, sio_oe_write_quad, sio_oe_write};
-    assign spi_flash_ss_n = ss_n | wb_adr[24];
-    assign spi_psram_ss_n = ss_n | ~wb_adr[24];
+    assign spi_flash_ss_n = ss_n | ~is_flash;
+    assign spi_psram_ss_n = ss_n | is_flash;
 
     assign read_command = 8'hEB;
     assign write_command = 8'h38;
@@ -103,6 +108,14 @@ module memory_device
     );
 
     always_ff @ (posedge clk) begin
+        if (rst) begin
+            flash_in_cont_mode <= 1'b0;
+        end else if (state == 5'd17 & sck & is_flash) begin
+            flash_in_cont_mode <= 1'b1;
+        end
+    end
+
+    always_ff @ (posedge clk) begin
         if (rst || !wb_cyc || !wb_stb) begin
             state <= 5'd0;
 
@@ -112,6 +125,7 @@ module memory_device
             sio_oe_write <= 1'b0;
             sio_oe_write_quad <= 1'b0;
             ss_n <= 1'b1;
+
         end else begin
             if (!ss_n) begin
                 sck <= ~sck;
@@ -121,7 +135,12 @@ module memory_device
                 5'd0: begin
                     ss_n <= 1'b0;
                     sio_oe_write <= 1'b1;
-                    sio_out[0] <= command[7];
+                    sio_oe_write_quad <= is_flash & flash_in_cont_mode;
+                    if (is_flash & flash_in_cont_mode) begin
+                        sio_out <= wb_effective_adr[23:20];
+                    end else begin
+                        sio_out[0] <= command[7];
+                    end
                 end
 
                 5'd2: if (sck) begin
@@ -178,26 +197,26 @@ module memory_device
                 end
 
                 5'd15: if (sck) begin
-                    // Write nibble / Wait cycle 1
-                    sio_out <= wb_effective_dat[7:4];
-                    sio_oe_write <= wb_we;
-                    sio_oe_write_quad <= wb_we;
+                    // Write nibble / Wait cycle 1 / Dummy byte
+                    sio_out <= is_flash ? 4'h2 : wb_effective_dat[7:4];
+                    sio_oe_write <= wb_we | is_flash;
+                    sio_oe_write_quad <= wb_we | is_flash;
                 end
 
                 5'd16: if (sck) begin
-                    // Write nibble / Wait cycle 2
-                    sio_out <= wb_effective_dat[3:0];
+                    // Write nibble / Wait cycle 2 // Dummy byte
+                    sio_out <= is_flash ? 4'h0 : wb_effective_dat[3:0];
                 end
 
                 5'd17: if (sck) begin
                     // Write nibble / Wait cycle 3
                     sio_out <= wb_effective_dat[15:12];
                     // Stop if 1 byte write
+                    sio_oe_write <= wb_we & wb_effective_sel[1] != 1'b0;;
+                    sio_oe_write_quad <= wb_we & wb_effective_sel[1] != 1'b0;
                     if (wb_we && wb_effective_sel[1] == 1'b0) begin
                         ack <= 1'b1;
                         ss_n <= 1'b1;
-                        sio_oe_write <= 1'b0;
-                        sio_oe_write_quad <= 1'b0;
                     end
                 end
 
@@ -279,13 +298,18 @@ module memory_device
 
             if (!sck) begin
                 if (state == 5'd29 && wb_cti == CTI_INCREMENT && wb_bte == BTE_LINEAR) begin
+                    // If we are bursting, we revert revert back to next word
                     state <= 5'd22;
+                end else if (state == 5'd0 && is_flash && flash_in_cont_mode) begin
+                    // If flash is in continous mode, we skip directly to 2nd address nibble
+                    state <= 5'd9;
                 end else if (state != 5'd31) begin
                     state <= state + 5'd1;
                 end
             end
 
             if (ack && wb_cti != CTI_CLASSIC) begin
+                // When not in classic mode, we deassert ACK to prepare for next request
                 ack <= 1'b0;
             end
         end
