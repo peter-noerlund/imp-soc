@@ -67,7 +67,7 @@ module input_device
             latch <= gamepad_latch && !prev_gamepad_latch;
 
             if (gamepad_clk && !prev_gamepad_clk) begin
-                gamepad_shift <= {gamepad_shift[23:0], gamepad_data};
+                gamepad_shift <= {gamepad_shift[22:0], gamepad_data};
             end
         end
     end
