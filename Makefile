@@ -27,14 +27,14 @@ VERILOG_SOURCES=\
 	src/wb_interconnect.sv \
 	src/write_aligner.sv
 
-all: colorlight/colorlight.svf
+all: colorlight/colorlight.svf colorlight/enter_quad.svf
 
-fpga: colorlight/colorlight.svf pico_ice/pico_ice.bin pico_ice/pico_ice_timing.txt
+fpga: colorlight/colorlight.svf colorlight/enter_quad.svf
 
 colorlight/pll.v:
 	ecppll -i 25 -o 65 -f colorlight/pll.v
 
-colorlight/colorlight.json: $(VERILOG_SOURCES) colorlight/colorlight_top.sv colorlight/pll.v
+colorlight/colorlight.json: $(VERILOG_SOURCES) colorlight/colorlight_top.sv colorlight/pll.v colorlight/reset_handler.sv
 	yosys -q -p "synth_ecp5 -top colorlight_top -json $@" -DFPGA -DCOLORLIGHT -l colorlight/colorlight.log $^
 
 colorlight/colorlight_out.config: colorlight/colorlight.json
@@ -44,6 +44,18 @@ colorlight/colorlight.bit: colorlight/colorlight_out.config
 	ecppack --svf colorlight/colorlight.svf $^ $@
 
 colorlight/colorlight.svf: colorlight/colorlight.bit
+
+colorlight/enter_quad.json: colorlight/enter_quad.sv colorlight/pll.v colorlight/reset_handler.sv
+	yosys -q -p "synth_ecp5 -top enter_quad -json $@" $^
+
+colorlight/enter_quad_out.config: colorlight/enter_quad.json
+	nextpnr-ecp5 --25k --package CABGA381 --speed 6 --json $^ --textcfg $@ --lpf colorlight/colorlight.lpf --freq 65
+
+colorlight/enter_quad.bit: colorlight/enter_quad_out.config
+	ecppack --svf colorlight/enter_quad.svf $^ $@
+
+colorlight/enter_quad.svf: colorlight/enter_quad.bit
+
 
 src/config_merged.json: src/config.json info.yaml
 	./tt/tt_tool.py --create-user-config
