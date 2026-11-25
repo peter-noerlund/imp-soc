@@ -179,29 +179,28 @@ async def wishbone_bus(dut, flash: list, ram: list, ram_address: int = 0x1000000
 
 
 
-async def memory_device(dut, ss_n, memory: bytearray, can_cont_mode: bool = False):
-    cont_mode = False
+async def memory_device(dut, ss_n, memory: bytearray, flash: bool = False):
     while True:
         await FallingEdge(ss_n)
         assert dut.spi_sck.value == 0
 
-        if cont_mode:
-            command = 0xEB
+        if flash:
+            command = 0x0B
         else:
             command = 0
 
-            for i in range(8):
+            for i in range(2):
                 await First(RisingEdge(dut.spi_sck), RisingEdge(ss_n))
                 if ss_n.value != 0:
                     break;
 
-                assert dut.spi_sio_oe.value == 0x1
-                command = (command << 1) | int(dut.spi_sio_out[0].value)
+                assert dut.spi_sio_oe.value == 0xF
+                command = (command << 4) | int(dut.spi_sio_out.value)
 
             if ss_n.value != 0:
                 continue
 
-            assert command == 0xEB or command == 0x38
+            assert command == 0x0B or command == 0x38
 
         address = 0
 
@@ -237,7 +236,7 @@ async def memory_device(dut, ss_n, memory: bytearray, can_cont_mode: bool = Fals
             await First(FallingEdge(dut.spi_sck), RisingEdge(ss_n))
             assert ss_n.value == 0
 
-            if can_cont_mode:
+            if flash:
                 await First(RisingEdge(dut.spi_sck), RisingEdge(ss_n))
                 assert ss_n.value == 0
                 assert dut.spi_sio_oe.value == 0xF
@@ -250,17 +249,12 @@ async def memory_device(dut, ss_n, memory: bytearray, can_cont_mode: bool = Fals
 
                 mode |= int(dut.spi_sio_out.value)
 
-                assert (mode & 0xF0) == 0xF0 or (mode & 0xF0) == 0x20
-
-                if mode & 0xF0 == 0xF0:
-                    cont_mode = False
-                elif mode & 0xF0 == 0x20:
-                    cont_mode = True
+                assert (mode & 0xF0) == 0x20
 
                 await First(FallingEdge(dut.spi_sck), RisingEdge(ss_n))
                 assert ss_n.value == 0
 
-            for i in range(4 if can_cont_mode else 6):
+            for i in range(4):
                 await First(FallingEdge(dut.spi_sck), RisingEdge(ss_n))
                 assert ss_n.value == 0
                 assert dut.spi_sio_oe.value == 0

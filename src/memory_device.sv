@@ -62,18 +62,16 @@ module memory_device
     // SPI signals
     bit sck;
     bit [3:0] sio_out;
-    bit sio_oe_write_quad;
-    bit sio_oe_write;
+    bit sio_oe;
     bit ss_n;
 
     // Other
     bit [4:0] state;
 
-    bit flash_in_cont_mode;
-
     wire [7:0] command;
     wire [7:0] read_command;
     wire [7:0] write_command;
+    wire [7:0] mode;
     wire is_flash;
 
     assign wb_ack = ack && !rst && wb_cyc && wb_stb;
@@ -85,12 +83,13 @@ module memory_device
 
     assign spi_sck = sck;
     assign spi_sio_out = sio_out;
-    assign spi_sio_oe = {sio_oe_write_quad, sio_oe_write_quad, sio_oe_write_quad, sio_oe_write};
+    assign spi_sio_oe = {sio_oe, sio_oe, sio_oe, sio_oe};
     assign spi_flash_ss_n = ss_n | ~is_flash;
     assign spi_psram_ss_n = ss_n | is_flash;
 
-    assign read_command = 8'hEB;
+    assign read_command = 8'h0B;
     assign write_command = 8'h38;
+    assign mode = 8'h20;
     assign command = wb_we ? write_command : read_command;
 
     write_aligner #(.ADDR_WIDTH(24)) aligner(
@@ -108,22 +107,13 @@ module memory_device
     );
 
     always_ff @ (posedge clk) begin
-        if (rst) begin
-            flash_in_cont_mode <= 1'b0;
-        end else if (state == 5'd17 & sck & is_flash) begin
-            flash_in_cont_mode <= 1'b1;
-        end
-    end
-
-    always_ff @ (posedge clk) begin
         if (rst || !wb_cyc || !wb_stb) begin
             state <= 5'd0;
 
             ack <= 1'b0;
 
             sck <= 1'b0;
-            sio_oe_write <= 1'b0;
-            sio_oe_write_quad <= 1'b0;
+            sio_oe <= 1'b0;
             ss_n <= 1'b1;
 
         end else begin
@@ -134,161 +124,126 @@ module memory_device
             case (state)
                 5'd0: begin
                     ss_n <= 1'b0;
-                    sio_oe_write <= 1'b1;
-                    sio_oe_write_quad <= is_flash & flash_in_cont_mode;
-                    if (is_flash & flash_in_cont_mode) begin
-                        sio_out <= wb_effective_adr[23:20];
-                    end else begin
-                        sio_out[0] <= command[7];
-                    end
+                    sio_oe <= 1'b1;
+                    sio_out <= is_flash ? wb_effective_adr[23:20] : command[7:4];
                 end
 
                 5'd2: if (sck) begin
-                    sio_out[0] <= command[6];
+                    sio_out <= command[3:0];
                 end
 
                 5'd3: if (sck) begin
-                    sio_out[0] <= command[5];
-                end
-
-                5'd4: if (sck) begin
-                    sio_out[0] <= command[4];
-                end
-
-                5'd5: if (sck) begin
-                    sio_out[0] <= command[3];
-                end
-
-                5'd6: if (sck) begin
-                    sio_out[0] <= command[2];
-                end
-
-                5'd7: if (sck) begin
-                    sio_out[0] <= command[1];
-                end
-
-                5'd8: if (sck) begin
-                    sio_out[0] <= command[0];
-                end
-
-                5'd9: if (sck) begin
-                    sio_oe_write_quad <= 1'b1;
                     sio_out <= wb_effective_adr[23:20];
                 end
 
-                5'd10: if (sck) begin
+                5'd4: if (sck) begin
                     sio_out <= wb_effective_adr[19:16];
                 end
 
-                5'd11: if (sck) begin
+                5'd5: if (sck) begin
                     sio_out <= wb_effective_adr[15:12];
                 end
 
-                5'd12: if (sck) begin
+                5'd6: if (sck) begin
                     sio_out <= wb_effective_adr[11:8];
                 end
 
-                5'd13: if (sck) begin
+                5'd7: if (sck) begin
                     sio_out <= wb_effective_adr[7:4];
                 end
 
-                5'd14: if (sck) begin
+                5'd8: if (sck) begin
                     sio_out <= wb_effective_adr[3:0];
                 end
 
-                5'd15: if (sck) begin
-                    // Write nibble / Wait cycle 1 / Dummy byte
-                    sio_out <= is_flash ? 4'h2 : wb_effective_dat[7:4];
-                    sio_oe_write <= wb_we | is_flash;
-                    sio_oe_write_quad <= wb_we | is_flash;
+                5'd9: if (sck) begin
+                    // Flash only
+                    sio_out <= mode[7:4];
+                end
+
+                5'd10: if (sck) begin
+                    // Flash only
+                    sio_out <= mode[3:0];
+                end
+
+                5'd11: begin
+                    // Wait cycle 1
+                    sio_oe <= 1'b0;
+                end
+
+                5'd12: begin
+                end
+
+                5'd13: begin
+                end
+
+                5'd14: begin
+                end
+
+                5'd15: begin
                 end
 
                 5'd16: if (sck) begin
-                    // Write nibble / Wait cycle 2 // Dummy byte
-                    sio_out <= is_flash ? 4'h0 : wb_effective_dat[3:0];
+                    sio_out <= wb_effective_dat[7:4];
+                    rdt[7:4] <= spi_sio_in;
                 end
 
                 5'd17: if (sck) begin
-                    // Write nibble / Wait cycle 3
-                    sio_out <= wb_effective_dat[15:12];
-                    // Stop if 1 byte write
-                    sio_oe_write <= wb_we & wb_effective_sel[1] != 1'b0;;
-                    sio_oe_write_quad <= wb_we & wb_effective_sel[1] != 1'b0;
-                    if (wb_we && wb_effective_sel[1] == 1'b0) begin
-                        ack <= 1'b1;
-                        ss_n <= 1'b1;
-                    end
+                    sio_out <= wb_effective_dat[3:0];
+                    rdt[3:0] <= spi_sio_in;
                 end
 
                 5'd18: if (sck) begin
-                    // Write nibble / Wait cycle 4
-                    sio_out <= wb_effective_dat[11:8];
+                    sio_out <= wb_effective_dat[15:12];
+                    rdt[15:12] <= spi_sio_in;
+
+                    // Stop if single byte write
+                    if (wb_we && wb_effective_sel[1] == 1'b0) begin
+                        ack <= 1'b1;
+                        ss_n <= 1'b1;
+                        sio_oe <= 1'b0;
+                    end
                 end
 
                 5'd19: if (sck) begin
-                    // Write nibble / Wait cycle 5
-                    sio_out <= wb_effective_dat[23:20];
-                    // Stop if 2 byte write
-                    if (wb_we && wb_effective_sel[2] == 1'b0) begin
-                        ack <= 1'b1;
-                        ss_n <= 1'b1;
-                        sio_oe_write <= 1'b0;
-                        sio_oe_write_quad <= 1'b0;
-                    end
-                end
-
-                5'd20: if (sck) begin
-                    // Write nibble / Wait cycle 6
-                    sio_out <= wb_effective_dat[19:16];
-                end
-
-                5'd21: if (sck) begin
-                    sio_out <= wb_effective_dat[31:28];
-                end
-
-                5'd22: if (sck) begin
-                    rdt[7:4] <= spi_sio_in;
-                    sio_out <= wb_effective_dat[27:24];
-                end
-
-                5'd23: if (sck) begin
-                    rdt[3:0] <= spi_sio_in;
-                    if (wb_we) begin
-                        // Stop if write                    
-                        ack <= 1'b1;
-                        ss_n <= 1'b1;
-                        sio_oe_write <= 1'b0;
-                        sio_oe_write_quad <= 1'b0;
-                    end
-                end
-
-                5'd24: if (sck) begin
-                    rdt[15:12] <= spi_sio_in;
-                end
-
-                5'd25: if (sck) begin
+                    sio_out <= wb_effective_dat[11:8];
                     rdt[11:8] <= spi_sio_in;
                 end
 
-                5'd26: if (sck) begin
+                5'd20: if (sck) begin
+                    sio_out <= wb_effective_dat[23:20];
                     rdt[23:20] <= spi_sio_in;
+
+                    // Stop if 2-byte write
+                    if (wb_we && wb_effective_sel[2] == 1'b0) begin
+                        ack <= 1'b1;
+                        ss_n <= 1'b1;
+                        sio_oe <= 1'b0;
+                    end
                 end
 
-                5'd27: if (sck) begin
+                5'd21: if (sck) begin
+                    sio_out <= wb_effective_dat[19:16];
                     rdt[19:16] <= spi_sio_in;
                 end
 
-                5'd28: if (sck) begin
+                5'd22: if (sck) begin
+                    sio_out <= wb_effective_dat[31:28];
                     rdt[31:28] <= spi_sio_in;
                 end
 
-                5'd29: if (sck) begin
+                5'd23: if (sck) begin
+                    sio_out <= wb_effective_dat[27:24];
                     rdt[27:24] <= spi_sio_in;
+                    
                     // Stop
                     ack <= 1'b1;
-                    if (wb_cti != CTI_INCREMENT || wb_bte != BTE_LINEAR) begin
-                        ss_n <= 1'b1;
-                    end
+
+                    ss_n <= ~wb_we & ~(wb_cti == CTI_INCREMENT & wb_bte == BTE_LINEAR);
+                end
+
+                5'd24: if (sck) begin
+                    ss_n <= 1'b1;
                 end
 
                 default: begin
@@ -297,12 +252,12 @@ module memory_device
             endcase
 
             if (!sck) begin
-                if (state == 5'd29 && wb_cti == CTI_INCREMENT && wb_bte == BTE_LINEAR) begin
-                    // If we are bursting, we revert revert back to next word
-                    state <= 5'd22;
-                end else if (state == 5'd0 && is_flash && flash_in_cont_mode) begin
-                    // If flash is in continous mode, we skip directly to 2nd address nibble
-                    state <= 5'd9;
+                if (state == 5'd0 && is_flash) begin
+                    state <= 5'd3; // Skip command
+                end else if (state == 5'd8 && !is_flash) begin
+                    state <= wb_we ? 5'd16 : 5'd11; // Skip to data if write and wait cycles if read
+                end else if (state == 5'd23 && wb_cti == CTI_INCREMENT && wb_bte == BTE_LINEAR) begin
+                    state <= 5'd16;
                 end else if (state != 5'd31) begin
                     state <= state + 5'd1;
                 end
@@ -314,38 +269,4 @@ module memory_device
             end
         end
     end
-
-    /*
-        Signals
-
-        bit_counter |
-        0 (ss_n)    | Send command bit 7
-        0           | Send command bit 6
-        1           | Send command bit 5
-        2           | Send command bit 4
-        3           | Send command bit 3
-        4           | Send command bit 2
-        5           | Send command bit 1
-        6           | Send command bit 0
-        7           | Send address bit 23-20
-        8           | Send address bit 19-16
-        9           | Send address bit 15-12
-        10          | Send address bit 11-8
-        11          | Send address bit 7-4
-        12          | Send address bit 3-0
-        13          | Send byte 0 bit 7:4       | Toggle input pins
-        14          | Send byte 0 bit 3:0       |
-        15          | Send byte 1 bit 7:4       |
-        16          | Send byte 1 bit 3:0       |
-        17          | Send byte 2 bit 7:4       |
-        18          | Send byte 2 bit 3:0       |
-        19          | Send byte 3 bit 7:4       | Receive byte 0 bit 7:4
-        20          | Send byte 3 bit 3:0       | Receive byte 0 bit 3:0
-        21          |                           | Receive byte 1 bit 7:4
-        22          |                           | Receive byte 1 bit 3:0
-        23          |                           | Receive byte 2 bit 7:4
-        24          |                           | Receive byte 2 bit 3:0
-        25          |                           | Receive byte 3 bit 7:4
-        26          |                           | Receive byte 3 bit 3:0
-    */
 endmodule
