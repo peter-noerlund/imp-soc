@@ -27,9 +27,9 @@ VERILOG_SOURCES=\
 	src/wb_interconnect.sv \
 	src/write_aligner.sv
 
-all: colorlight/colorlight.svf colorlight/enter_quad.svf
+all: colorlight/colorlight.svf colorlight/init_qspi_pmod.svf
 
-fpga: colorlight/colorlight.svf colorlight/enter_quad.svf
+fpga: colorlight/colorlight.svf colorlight/init_qspi_pmod.svf
 
 colorlight/pll.v:
 	ecppll -i 25 -o 65 -f colorlight/pll.v
@@ -45,16 +45,16 @@ colorlight/colorlight.bit: colorlight/colorlight_out.config
 
 colorlight/colorlight.svf: colorlight/colorlight.bit
 
-colorlight/enter_quad.json: colorlight/enter_quad.sv colorlight/pll.v colorlight/reset_handler.sv
-	yosys -q -p "synth_ecp5 -top enter_quad -json $@" $^
+colorlight/init_qspi_pmod.json: colorlight/init_qspi_pmod.sv colorlight/pll.v colorlight/reset_handler.sv
+	yosys -q -p "synth_ecp5 -top init_qspi_pmod -json $@" -l colorlight/init_qspi_pmod.log $^
 
-colorlight/enter_quad_out.config: colorlight/enter_quad.json
+colorlight/init_qspi_pmod_out.config: colorlight/init_qspi_pmod.json
 	nextpnr-ecp5 --25k --package CABGA381 --speed 6 --json $^ --textcfg $@ --lpf colorlight/colorlight.lpf --freq 65
 
-colorlight/enter_quad.bit: colorlight/enter_quad_out.config
-	ecppack --svf colorlight/enter_quad.svf $^ $@
+colorlight/init_qspi_pmod.bit: colorlight/init_qspi_pmod_out.config
+	ecppack --svf colorlight/init_qspi_pmod.svf $^ $@
 
-colorlight/enter_quad.svf: colorlight/enter_quad.bit
+colorlight/init_qspi_pmod.svf: colorlight/init_qspi_pmod.bit
 
 
 src/config_merged.json: src/config.json info.yaml

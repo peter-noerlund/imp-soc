@@ -3,7 +3,7 @@
 module reset_handler
     (
         input wire clk,
-        input wire rst_in,
+        input wire clk_locked,
         output wire rst_out
     );
 
@@ -16,7 +16,7 @@ module reset_handler
     end
 
     always_ff @ (posedge clk) begin
-        if (!rst_in) begin
+        if (clk_locked) begin
             if (rst_cnt == 4'd15) begin
                 rst <= 1'b0;
             end else begin

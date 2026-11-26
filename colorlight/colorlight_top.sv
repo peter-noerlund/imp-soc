@@ -58,16 +58,16 @@ module colorlight_top
 
     assign LED = rst;
 
-    reset_handler reset_handler(
-        .clk(clk),
-        .rst_in(clk_locked),
-        .rst_out(rst)
-    );
-
     pll pll(
         .clkin(clk25),
         .clkout0(clk),
         .locked(clk_locked)
+    );
+
+    reset_handler reset_handler(
+        .clk(clk),
+        .clk_locked(clk_locked),
+        .rst_out(rst)
     );
 
     BB bb[7:0] (
