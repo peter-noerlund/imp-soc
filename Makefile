@@ -45,8 +45,8 @@ colorlight/colorlight.bit: colorlight/colorlight_out.config
 
 colorlight/colorlight.svf: colorlight/colorlight.bit
 
-colorlight/init_qspi_pmod.json: colorlight/init_qspi_pmod.sv colorlight/pll.v colorlight/reset_handler.sv
-	yosys -q -p "synth_ecp5 -top init_qspi_pmod -json $@" -l colorlight/init_qspi_pmod.log $^
+colorlight/init_qspi_pmod.json: colorlight/init_qspi_pmod_top.sv  colorlight/init_qspi_pmod.sv colorlight/pll.v colorlight/reset_handler.sv
+	yosys -q -p "synth_ecp5 -top init_qspi_pmod_top -json $@" -l colorlight/init_qspi_pmod.log $^
 
 colorlight/init_qspi_pmod_out.config: colorlight/init_qspi_pmod.json
 	nextpnr-ecp5 --25k --package CABGA381 --speed 6 --json $^ --textcfg $@ --lpf colorlight/colorlight.lpf --freq 65
@@ -70,6 +70,9 @@ harden: src/config_merged.json
 program-colorlight: colorlight/colorlight.svf
 	openocd -f colorlight/openocd.cfg
 
+program-init_qspi_pmod: colorlight/init_qspi_pmod.svf
+	openocd -f colorlight/init_qspi_pmod_openocd.cfg
+
 lint:
 	verilator --lint-only -Wall $(VERILOG_SOURCES)
 
@@ -79,4 +82,4 @@ lint-colorlight: colorlight/pll.v
 test:
 	$(MAKE) -C test
 
-.PHONY: all fpga harden lint lint-colorlight test
+.PHONY: all fpga harden lint lint-colorlight test program-colorlight program-init_qspi_pmod

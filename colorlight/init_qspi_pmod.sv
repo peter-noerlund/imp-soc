@@ -2,131 +2,119 @@
 
 module init_qspi_pmod
     (
-        input wire clk25,
+        input wire clk,
+        input wire rst,
 
-        output wire LED,
-        inout wire [7:0] P3_PMOD2
+        output wire spi_sck,
+        output wire spi_flash_ss_n,
+        output wire spi_psram_ss_n,
+        output wire [3:0] spi_sio_oe,
+        output wire [3:0] spi_sio_out,
+
+        output wire done
     );
 
-    // flash_cs psram_cs quad_oe oe sio[3:0]
+    bit [8:0] prog [63:0];
+    bit [5:0] counter;
 
-    bit [7:0] prog [32:0];
-    bit [6:0] counter;
-    bit [7:0] instr;
-    bit done;
+    bit [8:0] instr;
 
-    wire clk;
-    wire clk_locked;
-    wire rst;
+    bit done_r;
 
-    wire [5:0] pc;
-
-    wire spi_sck;
-    wire spi_flash_ss_n;
-    wire spi_psram_ss_n;
-    wire [3:0] spi_sio_out;
-    wire [3:0] spi_sio_oe;
-
-    wire [7:0] p3_pmod2_in;
-    wire [7:0] p3_pmod2_oe;
-    wire [7:0] p3_pmod2_out;
-
-    assign pc = counter[6:1];
-
-    assign spi_sck = counter[0];
+    assign spi_sck = instr[8];
     assign spi_flash_ss_n = instr[7];
     assign spi_psram_ss_n = instr[6];
     assign spi_sio_oe = {instr[5], instr[5], instr[5], instr[4]};
     assign spi_sio_out = instr[3:0];
 
-    assign p3_pmod2_oe = {2'b11, spi_sio_oe[3:2], 1'b1, spi_sio_oe[1:0], 1'b1};
-    assign p3_pmod2_out = {
-        1'b1,
-        spi_psram_ss_n,
-        spi_sio_out[3:2],
-        spi_sck,
-        spi_sio_out[1:0],
-        spi_flash_ss_n
-    };
-
-    assign LED = ~done;
-
-    pll pll(
-        .clkin(clk25),
-        .clkout0(clk),
-        .locked(clk_locked)
-    );
-
-    reset_handler reset_handler(
-        .clk(clk),
-        .clk_locked(clk_locked),
-        .rst_out(rst)
-    );
-
-    BB bb[7:0] (
-        .B(P3_PMOD2),
-        .O(p3_pmod2_in),
-        .T(~p3_pmod2_oe),
-        .I(p3_pmod2_out)
-    );
+    assign done = done_r;
 
     always_comb begin
-        prog[0] = 8'b1_1_0_0_0000;
+        prog[0]  = 9'b0_1_1_0_0_0000;
         // Flash
         // Quad read command (0xEB)
-        prog[1] = 8'b0_1_0_1_0001;
-        prog[2] = 8'b0_1_0_1_0001;
-        prog[3] = 8'b0_1_0_1_0001;
-        prog[4] = 8'b0_1_0_1_0000;
-        prog[5] = 8'b0_1_0_1_0001;
-        prog[6] = 8'b0_1_0_1_0000;
-        prog[7] = 8'b0_1_0_1_0001;
-        prog[8] = 8'b0_1_0_1_0001;
+        prog[1]  = 9'b0_0_1_0_1_0001;
+        prog[2]  = 9'b1_0_1_0_1_0001;
+        prog[3]  = 9'b0_0_1_0_1_0001;
+        prog[4]  = 9'b1_0_1_0_1_0001;
+        prog[5]  = 9'b0_0_1_0_1_0001;
+        prog[6]  = 9'b1_0_1_0_1_0001;
+        prog[7]  = 9'b0_0_1_0_1_0000;
+        prog[8]  = 9'b1_0_1_0_1_0000;
+        prog[9]  = 9'b0_0_1_0_1_0001;
+        prog[10] = 9'b1_0_1_0_1_0001;
+        prog[11] = 9'b0_0_1_0_1_0000;
+        prog[12] = 9'b1_0_1_0_1_0000;
+        prog[13] = 9'b0_0_1_0_1_0001;
+        prog[14] = 9'b1_0_1_0_1_0001;
+        prog[15] = 9'b0_0_1_0_1_0001;
+        prog[16] = 9'b1_0_1_0_1_0001;
         // Address=0
-        prog[9] = 8'b0_1_1_1_0000;
-        prog[10] = 8'b0_1_1_1_0000;
-        prog[11] = 8'b0_1_1_1_0000;
-        prog[12] = 8'b0_1_1_1_0000;
-        prog[13] = 8'b0_1_1_1_0000;
-        prog[14] = 8'b0_1_1_1_0000;
+        prog[17] = 9'b0_0_1_1_1_0000;
+        prog[18] = 9'b1_0_1_1_1_0000;
+        prog[19] = 9'b0_0_1_1_1_0000;
+        prog[20] = 9'b1_0_1_1_1_0000;
+        prog[21] = 9'b0_0_1_1_1_0000;
+        prog[22] = 9'b1_0_1_1_1_0000;
+        prog[23] = 9'b0_0_1_1_1_0000;
+        prog[24] = 9'b1_0_1_1_1_0000;
+        prog[25] = 9'b0_0_1_1_1_0000;
+        prog[26] = 9'b1_0_1_1_1_0000;
+        prog[27] = 9'b0_0_1_1_1_0000;
+        prog[28] = 9'b1_0_1_1_1_0000;
         // M[7:0]
-        prog[15] = 8'b0_1_1_1_0010;
-        prog[16] = 8'b0_1_1_1_0000;
+        prog[29] = 9'b0_0_1_1_1_0010;
+        prog[30] = 9'b1_0_1_1_1_0010;
+        prog[31] = 9'b0_0_1_1_1_0000;
+        prog[32] = 9'b1_0_1_1_1_0000;
         // Dummy
-        prog[17] = 8'b0_1_0_0_0000;
-        prog[18] = 8'b0_1_0_0_0000;
-        prog[19] = 8'b0_1_0_0_0000;
-        prog[20] = 8'b0_1_0_0_0000;
+        prog[33] = 9'b0_0_1_0_0_0000;
+        prog[34] = 9'b1_0_1_0_0_0000;
+        prog[35] = 9'b0_0_1_0_0_0000;
+        prog[36] = 9'b1_0_1_0_0_0000;
+        prog[37] = 9'b0_0_1_0_0_0000;
+        prog[38] = 9'b1_0_1_0_0_0000;
+        prog[39] = 9'b0_0_1_0_0_0000;
+        prog[40] = 9'b1_0_1_0_0_0000;
         // Data
-        prog[21] = 8'b0_1_0_0_0000;
-        prog[22] = 8'b0_1_0_0_0000;
+        prog[41] = 9'b0_0_1_0_0_0000;
+        prog[42] = 9'b1_0_1_0_0_0000;
+        prog[43] = 9'b0_0_1_0_0_0000;
+        prog[44] = 9'b1_0_1_0_0_0000;
         // Stop
-        prog[23] = 8'b1_1_0_0_0000;
+        prog[45] = 9'b0_1_1_0_0_0000;
+        prog[46] = 9'b0_1_1_0_0_0000;
         // PSRAM
         // Enter Quad Mode (0x35)
-        prog[24] = 8'b1_0_0_1_0000;
-        prog[25] = 8'b1_0_0_1_0000;
-        prog[26] = 8'b1_0_0_1_0001;
-        prog[27] = 8'b1_0_0_1_0001;
-        prog[28] = 8'b1_0_0_1_0000;
-        prog[29] = 8'b1_0_0_1_0001;
-        prog[30] = 8'b1_0_0_1_0000;
-        prog[31] = 8'b1_0_0_1_0001;
-        // End
-        prog[32] = 8'b1_1_0_0_0000;
+        prog[47] = 9'b0_1_0_0_1_0000;
+        prog[48] = 9'b1_1_0_0_1_0000;
+        prog[49] = 9'b0_1_0_0_1_0000;
+        prog[50] = 9'b1_1_0_0_1_0000;
+        prog[51] = 9'b0_1_0_0_1_0001;
+        prog[52] = 9'b1_1_0_0_1_0001;
+        prog[53] = 9'b0_1_0_0_1_0001;
+        prog[54] = 9'b1_1_0_0_1_0001;
+        prog[55] = 9'b0_1_0_0_1_0000;
+        prog[56] = 9'b1_1_0_0_1_0000;
+        prog[57] = 9'b0_1_0_0_1_0001;
+        prog[58] = 9'b1_1_0_0_1_0001;
+        prog[59] = 9'b0_1_0_0_1_0000;
+        prog[60] = 9'b1_1_0_0_1_0000;
+        prog[61] = 9'b0_1_0_0_1_0001;
+        prog[62] = 9'b1_1_0_0_1_0001;
+        prog[63] = 9'b0_1_1_0_0_0000;
     end
 
     always_ff @ (posedge clk) begin
         if (rst) begin
-            counter <= 7'd0;
-            instr <= 8'b1_1_0_0_0000;
-            done <= 1'b0;
-        end else if (!done) begin
-            if (pc == 6'd32) begin
-                done <= 1'b1;
-            end else begin
-                counter <= counter + 7'd1;
-                instr <= prog[pc];
+            counter <= 6'd0;
+            instr <= 9'b0_1_1_0_0_0000;
+            done_r <= 1'b0;
+        end else if (!done_r) begin
+            counter <= counter + 6'd1;
+            instr <= prog[counter];
+            if (counter == 6'd63) begin
+                done_r <= 1'b1;
             end
         end
     end

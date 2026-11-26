@@ -10,9 +10,11 @@ module reset_handler
     bit [3:0] rst_cnt;
     bit rst;
 
+    assign rst_out = rst;
+
     initial begin
         rst = 1'b1;
-        rst_cnt = 4'b0;
+        rst_cnt = 4'd0;
     end
 
     always_ff @ (posedge clk) begin
