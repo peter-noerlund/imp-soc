@@ -42,10 +42,9 @@ module memory_device
         output wire spi_psram_ss_n
     );
 
+
     localparam [2:0] CTI_CLASSIC = 3'b000;
     localparam [2:0] CTI_INCREMENT = 3'b010;
-
-    localparam [1:0] BTE_LINEAR = 2'b00;
 
     // Wishbone signals
     bit [31:0] rdt;
@@ -60,26 +59,26 @@ module memory_device
     wire [31:0] wb_effective_dat;
 
     // SPI signals
-    bit sck;
     bit [3:0] sio_out;
+    bit sck;
     bit sio_oe;
     bit ss_n;
 
     // Other
-    bit [4:0] state;
+    bit [5:0] state;
 
-    wire [7:0] command;
-    wire [7:0] read_command;
-    wire [7:0] write_command;
-    wire [7:0] mode;
-    wire is_flash;
+    wire [7:0] read_command = 8'h0B;
+    wire [7:0] write_command = 8'h38;
+    wire [7:0] command = wb_we ? write_command : read_command;
+    wire [7:0] mode = 8'h20;
+    wire is_flash = ~wb_adr[24];
+    wire is_burst = wb_effective_cti == CTI_INCREMENT;
+    wire at_end;
 
     assign wb_ack = ack && !rst && wb_cyc && wb_stb;
     assign wb_rty = 1'b0;
     assign wb_err = 1'b0;
     assign wb_rdt = rdt;
-
-    assign is_flash = ~wb_adr[24];
 
     assign spi_sck = sck;
     assign spi_sio_out = sio_out;
@@ -87,10 +86,11 @@ module memory_device
     assign spi_flash_ss_n = ss_n | ~is_flash;
     assign spi_psram_ss_n = ss_n | is_flash;
 
-    assign read_command = 8'h0B;
-    assign write_command = 8'h38;
-    assign mode = 8'h20;
-    assign command = wb_we ? write_command : read_command;
+    assign at_end =
+        (state == 6'd20 & wb_we & ~wb_effective_sel[1]) |
+        (state == 6'd24 & wb_we & ~wb_effective_sel[2]) |
+        (state == 6'd32 & wb_we) |
+        (state == 6'd39 & ~is_burst);
 
     write_aligner #(.ADDR_WIDTH(24)) aligner(
         .wb_in_adr(wb_adr[23:0]),
@@ -108,165 +108,87 @@ module memory_device
 
     always_ff @ (posedge clk) begin
         if (rst || !wb_cyc || !wb_stb) begin
-            state <= 5'd0;
-
+            state <= 6'd0;
             ack <= 1'b0;
-
-            sck <= 1'b0;
             sio_oe <= 1'b0;
             ss_n <= 1'b1;
-
         end else begin
-            if (!ss_n) begin
-                sck <= ~sck;
-            end
-
             case (state)
-                5'd0: begin
+                // Idle
+                6'd0: begin
                     ss_n <= 1'b0;
                     sio_oe <= 1'b1;
                     sio_out <= is_flash ? wb_effective_adr[23:20] : command[7:4];
                 end
 
-                5'd2: if (sck) begin
-                    sio_out <= command[3:0];
-                end
+                // Command/Address phase
+                6'd2:   sio_out <= is_flash ? wb_effective_adr[19:16]   : command[3:0];
+                6'd4:   sio_out <= is_flash ? wb_effective_adr[15:12]   : wb_effective_adr[23:20];
+                6'd6:   sio_out <= is_flash ? wb_effective_adr[11:8]    : wb_effective_adr[19:16];
+                6'd8:   sio_out <= is_flash ? wb_effective_adr[7:4]     : wb_effective_adr[15:12];
+                6'd10:  sio_out <= is_flash ? wb_effective_adr[3:0]     : wb_effective_adr[11:8];
+                6'd12:  sio_out <= is_flash ? mode[7:4]                 : wb_effective_adr[7:4];
+                6'd14:  sio_out <= is_flash ? mode[3:0]                 : wb_effective_adr[3:0];
 
-                5'd3: if (sck) begin
-                    sio_out <= wb_effective_adr[23:20];
-                end
-
-                5'd4: if (sck) begin
-                    sio_out <= wb_effective_adr[19:16];
-                end
-
-                5'd5: if (sck) begin
-                    sio_out <= wb_effective_adr[15:12];
-                end
-
-                5'd6: if (sck) begin
-                    sio_out <= wb_effective_adr[11:8];
-                end
-
-                5'd7: if (sck) begin
-                    sio_out <= wb_effective_adr[7:4];
-                end
-
-                5'd8: if (sck) begin
-                    sio_out <= wb_effective_adr[3:0];
-                end
-
-                5'd9: if (sck) begin
-                    // Flash only
-                    sio_out <= mode[7:4];
-                end
-
-                5'd10: if (sck) begin
-                    // Flash only
-                    sio_out <= mode[3:0];
-                end
-
-                5'd11: begin
-                    // Wait cycle 1
-                    sio_oe <= 1'b0;
-                end
-
-                5'd12: begin
-                end
-
-                5'd13: begin
-                end
-
-                5'd14: begin
-                end
-
-                5'd15: begin
-                end
-
-                5'd16: if (sck) begin
+                // Write / Wait phase
+                6'd16: begin
+                    sio_oe <= ~is_flash & wb_we;
                     sio_out <= wb_effective_dat[7:4];
+                end
+                6'd18: sio_out <= wb_effective_dat[3:0];
+                6'd19: ack <= wb_we & ~wb_effective_sel[1];
+                6'd20: begin
+                    sio_out <= wb_effective_dat[15:12];
+                    ss_n <= wb_we & ~wb_effective_sel[1];
+                end
+                6'd22: sio_out <= wb_effective_dat[11:8];
+                6'd23: ack <= wb_we & ~wb_effective_sel[2];
+                6'd24: begin
+                    sio_out <= wb_effective_dat[23:20];
+                    ss_n <= wb_we & ~wb_effective_sel[2];
+                    if (is_burst) begin
+                        ack <= 1'b0;
+                    end
+                end
+
+                // Write / Read phase
+                6'd25: begin
                     rdt[7:4] <= spi_sio_in;
                 end
-
-                5'd17: if (sck) begin
-                    sio_out <= wb_effective_dat[3:0];
-                    rdt[3:0] <= spi_sio_in;
-                end
-
-                5'd18: if (sck) begin
-                    sio_out <= wb_effective_dat[15:12];
-                    rdt[15:12] <= spi_sio_in;
-
-                    // Stop if single byte write
-                    if (wb_we && wb_effective_sel[1] == 1'b0) begin
-                        ack <= 1'b1;
-                        ss_n <= 1'b1;
-                        sio_oe <= 1'b0;
-                    end
-                end
-
-                5'd19: if (sck) begin
-                    sio_out <= wb_effective_dat[11:8];
+                6'd26: sio_out <= wb_effective_dat[19:16];
+                6'd27: rdt[3:0] <= spi_sio_in;
+                6'd28: sio_out <= wb_effective_dat[31:28];
+                6'd29: rdt[15:12] <= spi_sio_in;
+                6'd30: sio_out <= wb_effective_dat[27:24];
+                6'd31: begin
+                    ack <= wb_we;
                     rdt[11:8] <= spi_sio_in;
                 end
+                6'd32: ss_n <= wb_we;
 
-                5'd20: if (sck) begin
-                    sio_out <= wb_effective_dat[23:20];
-                    rdt[23:20] <= spi_sio_in;
-
-                    // Stop if 2-byte write
-                    if (wb_we && wb_effective_sel[2] == 1'b0) begin
-                        ack <= 1'b1;
-                        ss_n <= 1'b1;
-                        sio_oe <= 1'b0;
-                    end
-                end
-
-                5'd21: if (sck) begin
-                    sio_out <= wb_effective_dat[19:16];
-                    rdt[19:16] <= spi_sio_in;
-                end
-
-                5'd22: if (sck) begin
-                    sio_out <= wb_effective_dat[31:28];
-                    rdt[31:28] <= spi_sio_in;
-                end
-
-                5'd23: if (sck) begin
-                    sio_out <= wb_effective_dat[27:24];
-                    rdt[27:24] <= spi_sio_in;
-                    
-                    // Stop
+                // Read phase
+                6'd33: rdt[23:20] <= spi_sio_in;
+                6'd35: rdt[19:16] <= spi_sio_in;
+                6'd37: rdt[31:28] <= spi_sio_in;
+                6'd39: begin
                     ack <= 1'b1;
-
-                    ss_n <= ~wb_we & ~(wb_cti == CTI_INCREMENT & wb_bte == BTE_LINEAR);
-                end
-
-                5'd24: if (sck) begin
-                    ss_n <= 1'b1;
+                    rdt[27:24] <= spi_sio_in;
+                    ss_n <= ~is_burst;
                 end
 
                 default: begin
-                    
                 end
             endcase
 
-            if (!sck) begin
-                if (state == 5'd0 && is_flash) begin
-                    state <= 5'd3; // Skip command
-                end else if (state == 5'd8 && !is_flash) begin
-                    state <= wb_we ? 5'd16 : 5'd11; // Skip to data if write and wait cycles if read
-                end else if (state == 5'd23 && wb_cti == CTI_INCREMENT && wb_bte == BTE_LINEAR) begin
-                    state <= 5'd16;
-                end else if (state != 5'd31) begin
-                    state <= state + 5'd1;
-                end
+            if (at_end) begin
+                state <= 6'd40;
+            end else if (state == 6'd39 && is_burst) begin
+                state <= 6'd24; // Prepare to return next set of data
+            end else if (state != 6'd40) begin
+                state <= state + 6'd1;
             end
 
-            if (ack && wb_cti != CTI_CLASSIC) begin
-                // When not in classic mode, we deassert ACK to prepare for next request
-                ack <= 1'b0;
-            end
+            sck <= state[0] & ~at_end;
         end
     end
 endmodule

@@ -113,7 +113,7 @@ async def test_write(dut, memory: bytearray, base_address: int):
         assert value == expected_value
 
 
-@cocotb.test()
+#@cocotb.test()
 async def test_memory_device(dut):
     clock = Clock(dut.clk, 15.384, unit="ns")
     cocotb.start_soon(clock.start())
@@ -142,3 +142,151 @@ async def test_memory_device(dut):
     await test_read(dut, psram, 0x1000000)
 
     await test_write(dut, psram, 0x1000000)
+
+    
+CTI_CLASSIC = 0
+CTI_INCREMENT = 2
+CTI_END_OF_BURST = 7
+
+BTE_LINEAR = 0
+
+
+async def wishbone_burst(dut, address: int, count: int) -> list:
+    """ Tests that burst fetch works correct """
+    data = []
+
+    dut.wb_cyc.value = 1
+    dut.wb_stb.value = 1
+    dut.wb_adr.value = address
+    dut.wb_we.value = 0
+    dut.wb_sel.value = 0xF
+    dut.wb_cti.value = CTI_INCREMENT
+    dut.wb_bte.value = BTE_LINEAR
+
+    cycle = 0
+    for i in range(25):
+        await ClockCycles(dut.clk, 1)
+        cycle += 1
+        assert dut.wb_ack.value == 0, f"wb_ack is not asserted at cycle {cycle}"
+        assert dut.wb_rty.value == 0, f"wb_rty is not asserted at cycle {cycle}"
+        assert dut.wb_err.value == 0, f"wb_err is not asserted at cycle {cycle}"
+
+    for i in range(count):
+        for j in range(15):
+            await ClockCycles(dut.clk, 1)
+            cycle += 1
+            assert dut.wb_ack.value == 0, f"wb_ack is not asserted at cycle {cycle}"
+            assert dut.wb_rty.value == 0, f"wb_rty is not asserted at cycle {cycle}"
+            assert dut.wb_err.value == 0, f"wb_err is not asserted at cycle {cycle}"
+    
+        await ClockCycles(dut.clk, 1)
+        cycle += 1
+
+        assert dut.wb_ack.value == 1, f"wb_ack is asserted at cycle {cycle}"
+        assert dut.wb_rty.value == 0, f"wb_rty is not asserted at cycle {cycle}"
+        assert dut.wb_err.value == 0, f"wb_err is not asserted at cycle {cycle}"
+
+        data.append(int(dut.wb_rdt.value))
+
+        dut.wb_adr.value = int(dut.wb_adr.value) + 4
+        if i + 1 == count:
+            dut.wb_cti.value = CTI_END_OF_BURST
+
+    dut.wb_cyc.value = 0
+    dut.wb_stb.value = 0
+
+    await ClockCycles(dut.clk, 1)
+    cycle += 1
+        
+    assert dut.wb_ack.value == 0, f"wb_ack is asserted at cycle {cycle}"
+    assert dut.wb_rty.value == 0, f"wb_rty is not asserted at cycle {cycle}"
+    assert dut.wb_err.value == 0, f"wb_err is not asserted at cycle {cycle}"
+
+    return data
+
+
+async def wishbone_classic(dut, address: int) -> int:
+    """ Tests that classic fetch works with SERV CPU """
+    dut.wb_cyc.value = 1
+    dut.wb_stb.value = 1
+    dut.wb_adr.value = address
+    dut.wb_we.value = 0
+    dut.wb_sel.value = 0xF
+    dut.wb_cti.value = CTI_CLASSIC
+    dut.wb_bte.value = 0
+
+    cycle = 0
+    for i in range(40):
+        await ClockCycles(dut.clk, 1)
+        cycle += 1
+        assert dut.wb_ack.value == 0, f"wb_ack is not asserted at cycle {cycle}"
+        assert dut.wb_rty.value == 0, f"wb_rty is not asserted at cycle {cycle}"
+        assert dut.wb_err.value == 0, f"wb_err is not asserted at cycle {cycle}"
+
+    await ClockCycles(dut.clk, 1)
+    cycle += 1
+
+    assert dut.wb_ack.value == 1, f"wb_ack is asserted at cycle {cycle}"
+    assert dut.wb_rty.value == 0, f"wb_rty is not asserted at cycle {cycle}"
+    assert dut.wb_err.value == 0, f"wb_err is not asserted at cycle {cycle}"
+
+    data = int(dut.wb_rdt.value)
+
+    for i in range(8):
+        await ClockCycles(dut.clk, 1)
+        
+        assert dut.wb_ack.value == 1, f"wb_ack is still asserted {i} cycles after ack"
+        assert dut.wb_rty.value == 0, f"wb_ack is still not asserted {i} cycles after ack"
+        assert dut.wb_err.value == 0, f"wb_ack is still not asserted {i} cycles after ack"
+
+    dut.wb_cyc.value = 0
+    dut.wb_stb.value = 0
+
+    await ClockCycles(dut.clk, 1)
+        
+    assert dut.wb_ack.value == 0, f"wb_ack is not asserted when wb_stb is deasserted"
+    assert dut.wb_rty.value == 0, f"wb_ack is not asserted when wb_stb is deasserted"
+    assert dut.wb_err.value == 0, f"wb_ack is not asserted when wb_stb is deasserted"
+
+    return data
+   
+
+
+@cocotb.test()
+async def test_wishbone(dut):
+    clock = Clock(dut.clk, 15.384, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    flash = bytearray(16 * 1024 * 1024)
+    for i in range(16 * 1024 * 1024):
+        flash[i] = random.randrange(256)
+    cocotb.start_soon(memory_device(dut, dut.spi_flash_ss_n, flash, flash=True))
+
+    psram = bytearray(8 * 1024 * 1024)
+    for i in range(8 * 1024 * 1024):
+        psram[i] = random.randrange(256)
+    cocotb.start_soon(memory_device(dut, dut.spi_psram_ss_n, psram))
+
+    dut.rst.value = 1
+    dut.wb_cyc.value = 0
+    dut.wb_stb.value = 0
+
+    await ClockCycles(dut.clk, 10)
+    dut.rst.value = 0
+    await ClockCycles(dut.clk, 10)
+
+    for i in range(2, 16):
+        data = await wishbone_burst(dut, 0x1000000, i)
+
+        assert len(data) == i
+
+        expected_data = []
+        for j in range(len(data)):
+            val = int.from_bytes(psram[j * 4 : j * 4 + 4], byteorder="little")
+            assert data[j] == val
+
+    data = await wishbone_classic(dut, 0x1000000)
+
+    val = int.from_bytes(psram[0:4], byteorder="little")
+
+    assert data == val

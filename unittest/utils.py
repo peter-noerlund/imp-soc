@@ -197,6 +197,10 @@ async def memory_device(dut, ss_n, memory: bytearray, flash: bool = False):
                 assert dut.spi_sio_oe.value == 0xF
                 command = (command << 4) | int(dut.spi_sio_out.value)
 
+                await First(FallingEdge(dut.spi_sck), RisingEdge(ss_n))
+                if ss_n.value != 0:
+                    break
+
             if ss_n.value != 0:
                 continue
 
