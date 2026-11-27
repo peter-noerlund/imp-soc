@@ -125,9 +125,9 @@ module memory_device
                 6'd4:           sio_out <= is_flash ? wb_effective_adr[15:12]   : wb_effective_adr[23:20];
                 6'd6:           sio_out <= is_flash ? wb_effective_adr[11:8]    : wb_effective_adr[19:16];
                 6'd8:           sio_out <= is_flash ? wb_effective_adr[7:4]     : wb_effective_adr[15:12];
-                {1'b?, 5'd10}:  sio_out <= is_flash ? wb_effective_adr[3:0]     : wb_effective_adr[11:8];
-                {1'b?, 5'd12}:  sio_out <= is_flash ? mode[7:4]                 : wb_effective_adr[7:4];
-                {1'b?, 5'd14}:  sio_out <= is_flash ? mode[3:0]                 : wb_effective_adr[3:0];
+                6'd10:          sio_out <= is_flash ? wb_effective_adr[3:0]     : wb_effective_adr[11:8];
+                6'd12:          sio_out <= is_flash ? mode[7:4]                 : wb_effective_adr[7:4];
+                6'd14:          sio_out <= is_flash ? mode[3:0]                 : wb_effective_adr[3:0];
 
                 // Write / Wait phase
                 {1'b?, 5'd16}: begin
@@ -173,7 +173,7 @@ module memory_device
                     ss_n <= ~is_burst;
                 end
 
-                6'd40: begin
+                6'b101???: begin    // case 40
                 end
 
                 default begin
@@ -181,10 +181,10 @@ module memory_device
             endcase
 
             if (at_end) begin
-                state <= 6'd40;
+                state[5:3] <= 3'b101;
             end else if (state == 6'd39 && is_burst) begin
                 state <= 6'd24; // Prepare to return next set of data
-            end else if (state != 6'd40) begin
+            end else if (state[5:3] != 3'b101) begin
                 state <= state + 6'd1;
             end
 
