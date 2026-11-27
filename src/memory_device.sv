@@ -114,35 +114,35 @@ module memory_device
         end else begin
             casez (state)
                 // Idle
-                6'b000000: begin
+                6'd0: begin
                     ss_n <= 1'b0;
                     sio_oe <= 1'b1;
                     sio_out <= is_flash ? wb_effective_adr[23:20] : command[7:4];
                 end
 
                 // Command/Address phase
-                6'b000010:  sio_out <= is_flash ? wb_effective_adr[19:16]   : command[3:0];
-                6'b000100:  sio_out <= is_flash ? wb_effective_adr[15:12]   : wb_effective_adr[23:20];
-                6'b000110:  sio_out <= is_flash ? wb_effective_adr[11:8]    : wb_effective_adr[19:16];
-                6'b001000:  sio_out <= is_flash ? wb_effective_adr[7:4]     : wb_effective_adr[15:12];
-                6'b?01010:  sio_out <= is_flash ? wb_effective_adr[3:0]     : wb_effective_adr[11:8];
-                6'b?01100:  sio_out <= is_flash ? mode[7:4]                 : wb_effective_adr[7:4];
-                6'b?01110:  sio_out <= is_flash ? mode[3:0]                 : wb_effective_adr[3:0];
+                6'd2:           sio_out <= is_flash ? wb_effective_adr[19:16]   : command[3:0];
+                6'd4:           sio_out <= is_flash ? wb_effective_adr[15:12]   : wb_effective_adr[23:20];
+                6'd6:           sio_out <= is_flash ? wb_effective_adr[11:8]    : wb_effective_adr[19:16];
+                6'd8:           sio_out <= is_flash ? wb_effective_adr[7:4]     : wb_effective_adr[15:12];
+                {1'b?, 5'd10}:  sio_out <= is_flash ? wb_effective_adr[3:0]     : wb_effective_adr[11:8];
+                {1'b?, 5'd12}:  sio_out <= is_flash ? mode[7:4]                 : wb_effective_adr[7:4];
+                {1'b?, 5'd14}:  sio_out <= is_flash ? mode[3:0]                 : wb_effective_adr[3:0];
 
                 // Write / Wait phase
-                6'b?10000: begin
+                {1'b?, 5'd16}: begin
                     sio_oe <= ~is_flash & wb_we;
                     sio_out <= wb_effective_dat[7:4];
                 end
-                6'b?10010: sio_out <= wb_effective_dat[3:0];
-                6'b?10011: ack <= wb_we & ~wb_effective_sel[1];
-                6'b?10100: begin
+                {1'b?, 5'd18}:  sio_out <= wb_effective_dat[3:0];
+                {1'b?, 5'd19}:  ack <= wb_we & ~wb_effective_sel[1];
+                {1'b?, 5'd20}: begin
                     sio_out <= wb_effective_dat[15:12];
                     ss_n <= wb_we & ~wb_effective_sel[1];
                 end
-                6'b?10110: sio_out <= wb_effective_dat[11:8];
-                6'b?10111: ack <= wb_we & ~wb_effective_sel[2];
-                6'b?11000: begin
+                {1'b?, 5'd22}:  sio_out <= wb_effective_dat[11:8];
+                {1'b?, 5'd23}:  ack <= wb_we & ~wb_effective_sel[2];
+                {1'b?, 5'd24}: begin
                     sio_out <= wb_effective_dat[23:20];
                     ss_n <= wb_we & ~wb_effective_sel[2];
                     if (is_burst) begin
@@ -151,25 +151,23 @@ module memory_device
                 end
 
                 // Write / Read phase
-                6'b?11001: begin
-                    rdt[7:4] <= spi_sio_in;
-                end
-                6'b?11010: sio_out <= wb_effective_dat[19:16];
-                6'b?11011: rdt[3:0] <= spi_sio_in;
-                6'b?11100: sio_out <= wb_effective_dat[31:28];
-                6'b?11101: rdt[15:12] <= spi_sio_in;
-                6'b?11110: sio_out <= wb_effective_dat[27:24];
-                6'b?11111: begin
+                {1'b?, 5'd25}:  rdt[7:4] <= spi_sio_in;
+                {1'b?, 5'd26}:  sio_out <= wb_effective_dat[19:16];
+                {1'b?, 5'd27}:  rdt[3:0] <= spi_sio_in;
+                {1'b?, 5'd28}:  sio_out <= wb_effective_dat[31:28];
+                {1'b?, 5'd29}:  rdt[15:12] <= spi_sio_in;
+                {1'b?, 5'd30}:  sio_out <= wb_effective_dat[27:24];
+                {1'b?, 5'd31}: begin
                     ack <= wb_we;
                     rdt[11:8] <= spi_sio_in;
                 end
-                6'b100000: ss_n <= wb_we;
+                6'd32: ss_n <= wb_we;
 
                 // Read phase
-                6'b100001: rdt[23:20] <= spi_sio_in;
-                6'b100011: rdt[19:16] <= spi_sio_in;
-                6'b100101: rdt[31:28] <= spi_sio_in;
-                6'b100111: begin
+                6'd33: rdt[23:20] <= spi_sio_in;
+                6'd35: rdt[19:16] <= spi_sio_in;
+                6'd37: rdt[31:28] <= spi_sio_in;
+                6'd39: begin
                     ack <= 1'b1;
                     rdt[27:24] <= spi_sio_in;
                     ss_n <= ~is_burst;
