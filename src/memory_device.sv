@@ -43,19 +43,18 @@ module memory_device
     );
 
 
-    localparam [2:0] CTI_CLASSIC = 3'b000;
     localparam [2:0] CTI_INCREMENT = 3'b010;
+
+    localparam [1:0] BTE_LINEAR = 2'b00;
 
     // Wishbone signals
     bit [31:0] rdt;
     bit ack;
 
     wire [23:0] wb_effective_adr;
-    /* verilator lint_off UNUSEDSIGNAL */
     wire [3:0] wb_effective_sel;
     wire [2:0] wb_effective_cti;
     wire [1:0] wb_effective_bte;
-    /* verilator lint_on UNUSEDSIGNAL */
     wire [31:0] wb_effective_dat;
 
     // SPI signals
@@ -72,7 +71,7 @@ module memory_device
     wire [7:0] command = wb_we ? write_command : read_command;
     wire [7:0] mode = 8'h20;
     wire is_flash = ~wb_adr[24];
-    wire is_burst = wb_effective_cti == CTI_INCREMENT;
+    wire is_burst = wb_effective_cti == CTI_INCREMENT & wb_effective_bte == BTE_LINEAR;
     wire at_end;
 
     assign wb_ack = ack && !rst && wb_cyc && wb_stb;
@@ -87,10 +86,10 @@ module memory_device
     assign spi_psram_ss_n = ss_n | is_flash;
 
     assign at_end =
-        (state == 6'd20 & wb_we & ~wb_effective_sel[1]) |
-        (state == 6'd24 & wb_we & ~wb_effective_sel[2]) |
-        (state == 6'd32 & wb_we) |
-        (state == 6'd39 & ~is_burst);
+        (state[4:0] == 5'd20 & wb_we & ~wb_effective_sel[1]) |
+        (state[4:0] == 6'd24 & wb_we & ~wb_effective_sel[2]) |
+        (state[5] == 1'b1 & state[2:0] == 3'b000 & wb_we) |
+        (state[5] == 1'b1 & state[2:0] == 3'b111 & ~is_burst);
 
     write_aligner #(.ADDR_WIDTH(24)) aligner(
         .wb_in_adr(wb_adr[23:0]),
@@ -191,4 +190,6 @@ module memory_device
             sck <= state[0] & ~at_end;
         end
     end
+
+    wire _unused = &{wb_effective_sel[3], wb_effective_sel[0]};
 endmodule
