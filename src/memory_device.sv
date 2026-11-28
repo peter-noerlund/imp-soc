@@ -4,14 +4,21 @@
  * QSPI memory controller
  *
  * Exposes a QSPI-driven flash and PSRAM via a Wishbone bus.
- * The first 16MB goes to the flash and is read only and the last 16MB goes to the PSRAM and is writable.
- * Both flash and PSRAM is expected to support the Fast Quad Read (EB) in 1-4-4 mode with 6 delay cycles,
- * and the PSRAM should support Quad Write (38) in 1-4-4 mode.
  *
- * The byte selection fields m ust be 4'b0001 for byte write, 4'b0011 for two-byte write and 4'b1111 for four-byte write.
- * Use the write_aligner to align the write requests if needed.
+ * The first 16MB goes to the flash which is expected to be put in to continous fast quad read.
+ * The next 8MB goes to the first PSRAM which is expected to be set in QPI mode.
+ *
+ * The expected frequency is 65MHz, so a clock cycle is 15.38 ns and tCH / tCL is 7.69 ns
+ * The PSRAM takes 2 - 5.5ns (tACLK) for data to be valid after SCK falling edge
+ * The Flash can take up to 1.5 - 6 ns (tCLQV / tCLQX) for data to be valid after SCK falling edge
+ * The Tiny Tapeout mutiplexer has a rising edge latency at about 20.4 ± 2 ns and the falling edge delay at about 16.3 ± 2 ns.
+ *
+ * So from the internal clock edge, it takes 15.8 - 28.4 ns for data to be valid, so we have to wait an additional cycle for data.
  */
 module memory_device
+    #(
+        parameter [1:0] DEFAULT_DELAY=2'd1  // Number of additional clock cycles to wait before reading from SPI
+    )
     (
         input wire clk,
         input wire rst,
@@ -42,153 +49,107 @@ module memory_device
         output wire spi_psram_ss_n
     );
 
-
     localparam [2:0] CTI_INCREMENT = 3'b010;
-
     localparam [1:0] BTE_LINEAR = 2'b00;
 
-    // Wishbone signals
-    bit [31:0] rdt;
-    bit ack;
+    localparam [3:0] STATE_IDLE = 4'd0;
+    localparam [3:0] STATE_COMMAND = 4'd1;
+    localparam [3:0] STATE_ADDR0 = 4'd2;
+    localparam [3:0] STATE_ADDR1 = 4'd3;
+    localparam [3:0] STATE_ADDR2 = 4'd4;
+    localparam [3:0] STATE_MODE = 4'd5;
+    localparam [3:0] STATE_DUMMY0 = 4'd6;
+    localparam [3:0] STATE_DUMMY1 = 4'd7;
+    localparam [3:0] STATE_DATA0 = 4'd8;
+    localparam [3:0] STATE_DATA1 = 4'd9;
+    localparam [3:0] STATE_DATA2 = 4'd10;
+    localparam [3:0] STATE_DATA3 = 4'd11;
+    localparam [3:0] STATE_IVALID = 4'bxxxx;
 
-    wire [23:0] wb_effective_adr;
-    wire [3:0] wb_effective_sel;
-    wire [2:0] wb_effective_cti;
-    wire [1:0] wb_effective_bte;
-    wire [31:0] wb_effective_dat;
-
-    // SPI signals
-    bit [3:0] sio_out;
-    bit sck;
-    bit sio_oe;
+    bit [2:0] next_state;
+    bit [2:0] state;
+    bit [1:0] cnt;
     bit ss_n;
-
-    // Other
-    bit [5:0] state;
-
-    wire [7:0] read_command = 8'h0B;
-    wire [7:0] write_command = 8'h38;
-    wire [7:0] command = wb_we ? write_command : read_command;
-    wire [7:0] mode = 8'h20;
+    bit [3:0] dout;
+    bit oe;
+    wire [7:0] next_output_byte;
     wire is_flash = ~wb_adr[24];
-    wire is_burst = wb_effective_cti == CTI_INCREMENT & wb_effective_bte == BTE_LINEAR;
-    wire at_end;
+    wire is_last = &{cnt};
+    wire is_mid = cnt[0] & ~cnt[1];
+    wire is_burst = wb_cti == CT_INCREMENT;
 
-    assign wb_ack = ack && !rst && wb_cyc && wb_stb;
-    assign wb_rty = 1'b0;
-    assign wb_err = 1'b0;
-    assign wb_rdt = rdt;
-
-    assign spi_sck = sck;
-    assign spi_sio_out = sio_out;
-    assign spi_sio_oe = {sio_oe, sio_oe, sio_oe, sio_oe};
+    assign spi_sck = cnt[0];
     assign spi_flash_ss_n = ss_n | ~is_flash;
     assign spi_psram_ss_n = ss_n | is_flash;
+    assign spi_sio_oe = {oe, oe, oe, oe};
+    assign spi_sio_out = dout;
 
-    assign at_end =
-        (state[4:0] == 5'd20 & wb_we & ~wb_effective_sel[1]) |
-        (state[4:0] == 5'd24 & wb_we & ~wb_effective_sel[2]) |
-        (state[5] == 1'b1 & state[2:0] == 3'b000 & wb_we) |
-        (state[5] == 1'b1 & state[2:0] == 3'b111 & ~is_burst);
+    always_comb begin
+        next_state = state;
 
-    write_aligner #(.ADDR_WIDTH(24)) aligner(
-        .wb_in_adr(wb_adr[23:0]),
-        .wb_in_we(wb_we),
-        .wb_in_sel(wb_sel),
-        .wb_in_dat(wb_dat),
-        .wb_in_cti(wb_cti),
-        .wb_in_bte(wb_bte),
-        .wb_out_adr(wb_effective_adr),
-        .wb_out_sel(wb_effective_sel),
-        .wb_out_dat(wb_effective_dat),
-        .wb_out_cti(wb_effective_cti),
-        .wb_out_bte(wb_effective_bte)
-    );
+        if (is_last) begin
+            case (state)
+                STATE_IDLE:     next_state = (wb_cyc & wb_stb) ? (is_flash ? STATE_ADDR0 : STATE_CMD) : STATE_IDLE;
+                STATE_CMD:      next_state = STATE_ADDR0;
+                STATE_ADDR0:    next_state = STATE_ADDR1;
+                STATE_ADDR1:    next_state = STATE_ADDR2;
+                STATE_ADDR2:    next_state = is_flash ? STATE_MODE : STATE_DUMMY0;;
+                STATE_MODE:     next_state = STATE_DUMMY0;
+                STATE_DUMMY0:   next_state = STATE_DUMMY1;
+                STATE_DUMMY1:   next_state = STATE_DATA0;
+                STATE_DATA0:    next_state = STATE_DATA1;
+                STATE_DATA1:    next_state = STATE_DATA2;
+                STATE_DATA2:    next_state = STATE_DATA3;
+                STATE_DATA3:    next_state = is_burst ? STATE_DATA0 : STATE_IDLE;
+                default:        next_state = STATE_INVALID;
+            endcase
+        end
+    end
+
+    always_comb begin
+        case (next_state)
+            STATE_CMD:      next_output_byte = wb_we ? 8'h0B : 8'h38;
+            STATE_ADDR0:    next_output_byte = wb_adr[23:16];
+            STATE_ADDR1:    next_output_byte = wb_adr[15:8];
+            STATE_ADDR2:    next_output_byte = wb_adr[7:0];
+            STATE_MODE:     next_output_byte = 8'h20;
+            STATE_DATA0:    next_output_byte = wb_dat[7:0];
+            STATE_DATA1:    next_output_byte = wb_adr[15:8];
+            STATE_DATA2:    next_output_byte = wb_adr[23:16];
+            STATE_DATA3:    next_output_byte = wb_adr[31:24];
+            default:        next_output_byte = 8'hxx;
+        end
+    end
 
     always_ff @ (posedge clk) begin
-        if (rst || !wb_cyc || !wb_stb) begin
-            state <= 6'd0;
-            ack <= 1'b0;
-            sio_oe <= 1'b0;
-            ss_n <= 1'b1;
-        end else begin
-            casez (state)
-                // Idle
-                6'd0: begin
-                    ss_n <= 1'b0;
-                    sio_oe <= 1'b1;
-                    sio_out <= is_flash ? wb_effective_adr[23:20] : command[7:4];
-                end
+        dout <= cnt[0] ^ cnt[1] ? next_output_byte[3:0] : next_output_byte[7:4];
+    end
 
-                // Command/Address phase
-                6'd2:           sio_out <= is_flash ? wb_effective_adr[19:16]   : command[3:0];
-                6'd4:           sio_out <= is_flash ? wb_effective_adr[15:12]   : wb_effective_adr[23:20];
-                6'd6:           sio_out <= is_flash ? wb_effective_adr[11:8]    : wb_effective_adr[19:16];
-                6'd8:           sio_out <= is_flash ? wb_effective_adr[7:4]     : wb_effective_adr[15:12];
-                6'd10:          sio_out <= is_flash ? wb_effective_adr[3:0]     : wb_effective_adr[11:8];
-                6'd12:          sio_out <= is_flash ? mode[7:4]                 : wb_effective_adr[7:4];
-                6'd14:          sio_out <= is_flash ? mode[3:0]                 : wb_effective_adr[3:0];
-
-                // Write / Wait phase
-                {1'b?, 5'd16}: begin
-                    sio_oe <= ~is_flash & wb_we;
-                    sio_out <= wb_effective_dat[7:4];
-                end
-                {1'b?, 5'd18}:  sio_out <= wb_effective_dat[3:0];
-                {1'b?, 5'd19}:  ack <= wb_we & ~wb_effective_sel[1];
-                {1'b?, 5'd20}: begin
-                    sio_out <= wb_effective_dat[15:12];
-                    ss_n <= wb_we & ~wb_effective_sel[1];
-                end
-                {1'b?, 5'd22}:  sio_out <= wb_effective_dat[11:8];
-                {1'b?, 5'd23}:  ack <= wb_we & ~wb_effective_sel[2];
-                {1'b?, 5'd24}: begin
-                    sio_out <= wb_effective_dat[23:20];
-                    ss_n <= wb_we & ~wb_effective_sel[2];
-                    if (is_burst) begin
-                        ack <= 1'b0;
-                    end
-                end
-
-                // Write / Read phase
-                {1'b?, 5'd25}:  rdt[7:4] <= spi_sio_in;
-                {1'b?, 5'd26}:  sio_out <= wb_effective_dat[19:16];
-                {1'b?, 5'd27}:  rdt[3:0] <= spi_sio_in;
-                {1'b?, 5'd28}:  sio_out <= wb_effective_dat[31:28];
-                {1'b?, 5'd29}:  rdt[15:12] <= spi_sio_in;
-                {1'b?, 5'd30}:  sio_out <= wb_effective_dat[27:24];
-                {1'b?, 5'd31}: begin
-                    ack <= wb_we;
-                    rdt[11:8] <= spi_sio_in;
-                end
-                6'd32: ss_n <= wb_we;
-
-                // Read phase
-                6'd33: rdt[23:20] <= spi_sio_in;
-                6'd35: rdt[19:16] <= spi_sio_in;
-                6'd37: rdt[31:28] <= spi_sio_in;
-                6'd39: begin
-                    ack <= 1'b1;
-                    rdt[27:24] <= spi_sio_in;
-                    ss_n <= ~is_burst;
-                end
-
-                6'b101???: begin    // case 40
-                end
-
-                default begin
-                end
-            endcase
-
-            if (at_end) begin
-                state[5:3] <= 3'b101;
-            end else if (state == 6'd39 && is_burst) begin
-                state <= 6'd24; // Prepare to return next set of data
-            end else if (state[5:3] != 3'b101) begin
-                state <= state + 6'd1;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            oe <= 1'b0;
+        end begin
+            if (next_state == STATE_CMD || next_state == STATE_ADDR0) begin
+                oe <= 1'b1;
+            end else if (next_state == STATE_DUMMY0) begin
+                oe <= 1'b0;
             end
+        end
+    end
 
-            sck <= state[0] & ~at_end;
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            state <= STATE_IDLE;
+        end else begin
+            state <= next_state;
+        end
+    end
+
+    always_ff @ (posedge clk) begin
+        if (rst) begin
+            cnt <= 2'd0;
+        end else begin
+            cnt <= cnt + 2'd1;
         end
     end
 
